@@ -1,0 +1,287 @@
+.arrangement-page .shell {
+  padding-bottom:3rem;
+}
+
+.arr-meta,.arr-label,.arr-repeat,.arr-method,.arr-cue p,.arr-findings dd {
+  color:var(--muted,#b7b6c9);
+}
+
+.arr-meta span {
+  padding:0 .45em;
+}
+
+.arr-player {
+  padding:0;
+  overflow:hidden;
+}
+
+.arr-picks,.arr-transport,.arr-roles,.arr-seek,.arr-cue {
+  padding:1rem clamp(.9rem,2.5vw,1.6rem);
+}
+
+.arr-picks,.arr-transport {
+  border-bottom:1px solid var(--line,#3b3d55);
+}
+
+.arr-player .button-row,.arr-player .arr-transport {
+  display:flex;
+  align-items:center;
+  gap:.45rem;
+  flex-wrap:wrap;
+}
+
+.arr-label {
+  font-size:.78rem;
+  margin-right:.35rem;
+}
+
+.arr-bars button {
+  min-width:2.15rem;
+}
+
+.arr-modes {
+  margin-left:auto;
+}
+
+.arr-clock,.arr-meta,.arr-chart-scroll svg text {
+  font-variant-numeric:tabular-nums;
+}
+
+.arr-clock {
+  font-family:Consolas,monospace;
+  font-size:.86rem;
+  min-width:8.5rem;
+}
+
+.arr-repeat {
+  font-size:.85rem;
+  display:flex;
+  align-items:center;
+  gap:.35rem;
+}
+
+.arr-repeat input,.arr-seek input {
+  accent-color:var(--accent,#b1c6ff);
+}
+
+.arr-chart-scroll {
+  overflow-x:auto;
+  overscroll-behavior-x:contain;
+}
+
+.arr-chart-scroll svg {
+  display:block;
+  width:100%;
+  min-width:630px;
+  height:auto;
+}
+
+.arr-chart-scroll .lane-name {
+  fill:var(--ink,#f2f2fc);
+  font-size:14px;
+  font-weight:600;
+}
+
+.arr-chart-scroll .axis {
+  fill:var(--muted,#b7b6c9);
+  font-size:11px;
+}
+
+.arr-chart-scroll .grid {
+  stroke:var(--line,#46495e);
+  stroke-width:.8;
+}
+
+.arr-chart-scroll .minor {
+  stroke-dasharray:2 4;
+  opacity:.6;
+}
+
+.arr-chart-scroll .note-label {
+  fill:#14172b;
+  font:600 10.5px/1 Consolas,monospace;
+  pointer-events:none;
+}
+
+.arr-chart-scroll .head {
+  stroke:var(--ink,#fff);
+  stroke-width:1.75;
+  pointer-events:none;
+}
+
+.arr-event {
+  cursor:pointer;
+}
+
+.arr-event[aria-current=true] {
+  stroke:var(--ink,#fff);
+  stroke-width:2;
+}
+
+.arr-event:focus-visible {
+  outline:2px solid var(--gold,#eecc86);
+  outline-offset:2px;
+}
+
+.arr-score-detail {
+  padding:.3rem clamp(.9rem,2.5vw,1.6rem) .65rem;
+  color:var(--ink,#f2f2fc);
+  font-size:.84rem;
+  font-variant-numeric:tabular-nums;
+}
+
+.arr-score-detail:empty {
+  display:none;
+}
+
+@media(pointer:coarse) {
+  .arr-event:not([aria-current=true]) {
+    stroke:transparent;
+    stroke-width:6;
+  }
+}
+
+.arr-seek {
+  padding-top:0;
+  padding-bottom:.55rem;
+}
+
+.arr-seek input {
+  width:100%;
+  display:block;
+}
+
+.arr-cue {
+  border-top:1px solid var(--line,#3b3d55);
+  display:flex;
+  align-items:baseline;
+  gap:1rem;
+}
+
+.arr-cue strong {
+  white-space:nowrap;
+}
+
+.arr-cue p,.arr-method p {
+  margin:0;
+}
+
+.arr-reading {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:1rem;
+  margin:1.25rem 0;
+}
+
+.arr-copy {
+  padding:clamp(1rem,2vw,1.5rem);
+}
+
+.arr-copy p {
+  margin:.7rem 0;
+}
+
+.arr-copy table {
+  border-collapse:collapse;
+  width:100%;
+  margin:.9rem 0;
+}
+
+.arr-copy th,.arr-copy td {
+  text-align:left;
+  border-bottom:1px solid var(--line,#3b3d55);
+  padding:.45rem .35rem .45rem 0;
+}
+
+.arr-findings {
+  margin:.75rem 0 0;
+}
+
+.arr-findings div {
+  margin:.6rem 0;
+}
+
+.arr-findings dt {
+  font-weight:600;
+  display:inline;
+}
+
+.arr-findings dd {
+  display:inline;
+  margin-left:.35rem;
+}
+
+.arr-error:empty {
+  display:none;
+}
+
+.arr-error {
+  color:var(--pink,#efadca);
+}
+
+.arr-method {
+  font-size:.85rem;
+}
+
+.arr-method summary {
+  cursor:pointer;
+}
+
+.arr-method p {
+  margin:.6rem 0;
+  max-width:88ch;
+}
+
+@media(max-width:720px) {
+  .arr-meta {
+    display:block;
+    line-height:1.55;
+  }
+
+  .arr-meta span:first-child {
+    display:block;
+    height:0;
+    overflow:hidden;
+  }
+
+  .arr-reading {
+    grid-template-columns:1fr;
+  }
+
+  .arr-modes {
+    margin-left:0;
+  }
+
+  .arr-cue {
+    display:block;
+  }
+
+  .arr-cue p {
+    margin-top:.35rem;
+  }
+
+  .arr-bars button {
+    min-width:1.7rem;
+    padding:.25rem .4rem;
+  }
+
+  .arr-picks,.arr-transport,.arr-roles {
+    padding-block:.7rem;
+  }
+
+}
+
+.arr-reference {
+  display:flex;
+  gap:.7rem;
+  align-items:center;
+  flex-wrap:wrap;
+  padding:.65rem clamp(.9rem,2.5vw,1.6rem) 0;
+  color:var(--muted,#b7b6c9);
+  font-size:.82rem;
+}
+
+.arr-reference button {
+  font-size:.82rem;
+}
+

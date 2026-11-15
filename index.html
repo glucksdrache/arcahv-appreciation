@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101223">
+  <meta name="description" content="A time-aligned listening study of Arcahv by Feryquitous, with vocal pitch, bass, instrumental chroma and two A/B comparisons.">
+  <title>Arcahv · Listening study</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="style.css?v=vs8">
+  <link rel="stylesheet" href="controls.css">
+  <script src="media-source.js" defer></script>
+  <script src="appearance.js?v=vs8" defer></script>
+  <script src="official-player.js" defer></script>
+  <script src="full.js" type="module"></script>
+</head>
+<body>
+<main class="shell">
+  <nav class="site-nav" aria-label="Study views">
+    <a href="index.html" aria-current="page">Full track</a>
+    <a href="arrangement.html">Nine-bar arrangement</a>
+    <a class="external" href="https://github.com/glucksdrache/arcahv-the-delightfulness-of-catastrophe/blob/main/README.md">Appreciation ↗</a>
+  </nav>
+  <header class="masthead">
+    <div><p class="eyebrow">Feryquitous</p><h1>Arcahv</h1>
+      <p class="track-meta"><span>2:52.99</span><i></i><span>Opening: 191 BPM</span><i></i><span>4/4</span></p>
+    </div>
+    <a class="hero-link" href="#comparisons">Compare phrases <span aria-hidden="true">↘</span></a>
+  </header>
+  <section class="panel score-panel" id="listen" aria-labelledby="score-title">
+    <div class="panel-head"><h2 id="score-title">Listening score</h2><a href="#release-player">Artist recording ↗</a></div>
+    <div class="score-nav" id="v-map" aria-label="Track sections"></div>
+    <div id="v-presets" class="button-row scopes" aria-label="Listening range">
+      <span class="group-label">Range</span><button data-seg="whole">Full track</button><button data-seg="opening">Opening</button>
+      <button data-seg="phrase">EH → KELEPZO IGAH</button><button data-seg="turn">Bass change</button><button data-seg="return">Vocal return</button>
+    </div>
+    <div class="transport">
+      <button class="play-button" id="v-play" aria-label="Play">▶ Play</button><output class="clock" id="v-clock">0:00.00 / 2:52.99</output>
+      <label><input type="checkbox" id="v-loop"> Loop</label>
+      <details class="custom-range" id="v-custom"><summary>Set range</summary>
+        <label>From <input id="v-a" type="number" min="0" max="172.99" step=".01"></label>
+        <label>To <input id="v-b" type="number" min="0" max="172.99" step=".01"> s</label><button id="v-apply">Apply</button>
+      </details>
+    </div>
+    <div class="button-row roles" id="v-modes" aria-label="Audible parts">
+      <span class="group-label">Parts</span><button data-vmode="0">Mix</button><button data-vmode="1">Vocal</button><button data-vmode="2">Accompaniment</button><button data-vmode="3">Vocal + bass</button><button data-vmode="6">Bass</button><button data-vmode="7">Drums</button><button data-vmode="8">Instruments</button>
+    </div>
+    <div class="source-row"><label for="source-choice">Audio source</label><select id="source-choice"><option value="guide">Synthesized reduction</option><option value="reference" disabled>Recorded stems</option></select>
+      <button id="import-ref" class="quiet-button">Load reference HTML</button><input id="ref-file" type="file" accept=".html,.htm,text/html" hidden><span id="ref-status" role="status"></span>
+    </div>
+    <p id="v-status" role="alert"></p>
+    <div class="chart-scroll"><svg id="v-chart" viewBox="0 0 960 418" role="img" aria-label="Time-aligned vocal pitch, vocal level, bass, instrumental chroma and percussion level"></svg></div>
+    <div class="seek-row"><input type="range" id="v-slider" step=".01" aria-label="Position in the source recording"></div>
+    <div class="readouts"><span>Audition <strong id="v-listening">Mix</strong></span><span>Vocal pitch <strong id="v-current-pitch">—</strong></span><span>Vocal RMS <strong id="v-current-db">—</strong></span><span>Bass <strong id="v-current-bass">—</strong></span><span>Chroma <strong id="v-current-harm">—</strong></span></div>
+    <p id="v-section-note" class="section-note" aria-live="polite"></p>
+  </section>
+  <section id="comparisons" class="comparisons">
+    <h2>Phrase comparisons</h2>
+    <div class="pair">
+      <article class="panel experiment">
+        <h3>One B♭4, two bass notes</h3><p>The vocal holds B♭4 at 12.77–13.80 s and again at 83.14–84.17 s. E♭1 beneath the first phrase gives a perfect fifth by pitch class. E2 beneath the return gives a tritone.</p>
+        <div class="button-row"><button data-natural="0">First phrase · E♭1</button><button data-natural="1">Return · E2</button></div>
+      </article>
+      <article class="panel experiment">
+        <h3>Change the bass alone</h3><p>Both versions use the same upper line and bass envelope from 9.65 to 14.75 s. At 11.653 s one bass moves down a major third to E♭1. The other holds G1.</p>
+        <div class="button-row"><button data-vmode="4">G1 → E♭1</button><button data-vmode="5">Hold G1</button></div>
+      </article>
+    </div>
+  </section>
+  <section class="panel" id="release-player" aria-label="Original recording"></section>
+  <section class="notes" aria-labelledby="guide-title"><h2 id="guide-title">Section notes</h2><div id="v-index" class="index"></div></section>
+  <details class="panel methods"><summary>Measurements and sources</summary>
+    <p>The horizontal axis follows the source file, including its opening silence. The vocal contour is sampled every 40 ms. Gaps mark frames without a sufficiently clear periodic pitch. Vocal and percussion levels are short-time RMS in dBFS.</p>
+    <p>The bass estimate follows the lower harmonics. Instrumental chroma folds spectral peaks into twelve pitch classes. Overtones and separation bleed can contribute to a peak. The sustained D, F, A and C above E♭ around 13.2–13.8 s support a local Dm7/E♭ reading.</p>
+    <p>The public reduction renders the measured contours and chroma with synthesized tones. The original video is linked at source. Loading the earlier full-track analysis HTML enables its recorded stems and vocal A/B examples on this device.</p>
+    <p>The background uses a blurred version of lowiro’s artwork for <em>Arcaea</em>, <a href="https://arcaea.fandom.com/wiki/Story/Black_Fate#Entry_VS-8">Black Fate, entry VS-8</a>. <button id="import-scene" class="quiet-button">Choose local background</button> <button id="reset-scene" class="quiet-button" hidden>Restore VS-8 background</button><input hidden type="file" accept="image/jpeg,image/png,image/webp" id="scene-file"><span id="scene-status" role="status"></span></p>
+  </details>
+</main>
+</body>
+</html>

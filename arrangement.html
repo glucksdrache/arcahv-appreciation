@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#14162a">
+  <title>Nine-bar arrangement · Arcahv</title>
+  <link rel="stylesheet" href="style.css?v=vs8">
+  <link rel="stylesheet" href="arrangement.css">
+  <link rel="stylesheet" href="controls.css">
+  <link rel="icon" href="data:,">
+  <script src="media-source.js"></script>
+  <script src="appearance.js?v=vs8" defer></script>
+  <script type="module" src="arrangement.js"></script>
+</head>
+<body class="arrangement-page">
+  <main class="shell">
+    <nav class="site-nav" aria-label="Study views">
+      <a href="index.html">Full track</a>
+      <a href="arrangement.html" aria-current="page">Nine-bar arrangement</a>
+      <a class="external" href="https://github.com/glucksdrache/arcahv-the-delightfulness-of-catastrophe/blob/main/README.md">Appreciation ↗</a>
+    </nav>
+    <header class="masthead">
+      <div>
+        <p class="eyebrow">Feryquitous · Arcahv</p>
+        <h1>Nine-bar arrangement</h1>
+        <p class="arr-meta">5.370–16.679 s in the source recording <span>·</span> 191 BPM <span>·</span> 4/4</p>
+      </div>
+    </header>
+
+    <section class="panel arr-player" aria-label="Arrangement player">
+      <div class="arr-picks">
+        <div class="button-row arr-bars" id="bars" role="group" aria-label="Select a bar">
+          <span class="arr-label">Bars</span>
+          <button type="button" data-bar="0" aria-pressed="true">All nine</button>
+        </div>
+      </div>
+      <div class="transport arr-transport">
+        <button id="play" type="button" class="play-button" aria-label="Play arrangement">▶ Play</button>
+        <output id="clock" class="arr-clock" aria-live="off">0.00 / 11.31 s</output>
+        <label class="arr-repeat"><input type="checkbox" id="loop"> Loop selection</label>
+        <div class="button-row arr-modes" id="modes" role="group" aria-label="Audio source">
+          <button type="button" data-mode="1" aria-pressed="true">Reduction</button>
+          <button type="button" data-mode="0" aria-pressed="false">Recording</button>
+        </div>
+      </div>
+      <div class="arr-reference" id="reference-controls">
+        <button type="button" id="load-reference">Load reference HTML</button>
+        <input id="reference-file" type="file" accept=".html,.htm,text/html" hidden>
+        <span id="reference-status" role="status">The recorded stems are loaded from your local analysis HTML.</span>
+      </div>
+      <div class="button-row arr-roles" id="roles" role="group" aria-label="Audible parts">
+        <span class="arr-label">Parts</span>
+        <button type="button" data-role="-1" aria-pressed="true">All accompaniment</button>
+        <button type="button" data-role="0" aria-pressed="false">Percussion</button>
+        <button type="button" data-role="1" aria-pressed="false">Bass</button>
+        <button type="button" data-role="2" aria-pressed="false">Instruments &amp; effects</button>
+      </div>
+      <div class="chart-scroll arr-chart-scroll">
+        <svg id="score" viewBox="0 0 960 365" role="group"
+          aria-label="Score events. Use the left and right arrow keys to inspect events, and Enter or Space to seek."></svg>
+      </div>
+      <p id="score-detail" class="arr-score-detail"></p>
+      <div class="arr-seek"><input id="seek" aria-label="Position in the excerpt, in seconds" type="range" min="0" max="11.309" value="0" step="0.001"></div>
+      <div class="arr-cue"><strong id="bar-title">Bars 1–9</strong><p id="bar-note"></p></div>
+    </section>
+    <p id="error" role="status" class="arr-error"></p>
+
+    <div class="arr-reading">
+      <section class="panel arr-copy">
+        <h2>Three common tones</h2>
+        <p>The synthesized example holds D4, F4 and A4 while the bass moves from G1 to E♭1.</p>
+        <table>
+          <thead><tr><th scope="col">Bass</th><th scope="col">D</th><th scope="col">F</th><th scope="col">A</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">G</th><td>Fifth</td><td>Minor seventh</td><td>Ninth</td></tr>
+            <tr><th scope="row">E♭</th><td>Major seventh</td><td>Ninth</td><td>Raised eleventh</td></tr>
+          </tbody>
+        </table>
+        <button id="common-tones" type="button" aria-pressed="false">▶ Play common tones</button>
+        <p>In bar 7 of the recording, A3, C4, D4 and F4 overlap above E♭1. <b>Dm7/E♭</b> describes this local voicing.</p>
+      </section>
+      <section class="panel arr-copy">
+        <h2>Timbre and timing</h2>
+        <dl class="arr-findings">
+          <div><dt>Bass</dt><dd>The second harmonic often exceeds the fundamental. The harmonic series supports G1 and E♭1 as the two pedal tones.</dd></div>
+          <div><dt>Percussion</dt><dd>The first accent in bar 2 has a bright attack. Its low-frequency body peaks about 40 ms later. Several pulses in the middle bars follow a triplet subdivision.</dd></div>
+          <div><dt>Inner parts</dt><dd>D4 and A3 persist over several beats. F4 and C4 enter at different points before the notes overlap in bar 7.</dd></div>
+          <div><dt>Swell</dt><dd>A peak near 424 Hz remains steady as the sound grows. A similar waveform returns 31½ beats later.</dd></div>
+        </dl>
+      </section>
+    </div>
+    <details class="arr-method">
+      <summary>Transcription notes</summary>
+      <p id="method"></p>
+      <p><a href="data/arrangement.mid" download>Download the nine-bar MIDI reduction</a></p>
+    </details>
+  </main>
+</body>
+</html>

@@ -1,0 +1,159 @@
+/* The face and its bevel are separate from the hit area and keyboard outline. */
+.shell :is(button, .hero-link) {
+  --cut: 6px;
+  --face-top: rgb(100 116 154 / 58%);
+  --face-bottom: rgb(30 39 65 / 74%);
+  --edge-light: rgb(217 231 255 / 78%);
+  --edge-dark: rgb(131 154 203 / 35%);
+}
+
+.shell :is(button, .hero-link):where(:not([hidden])) {
+  position: relative;
+  z-index: 0;
+  isolation: isolate;
+  border-color: transparent;
+  border-radius: 2px;
+  background: transparent;
+  color: #f3f5ff;
+  text-shadow: 0 1px 2px #141b31;
+  touch-action: manipulation;
+}
+
+.shell :is(button, .hero-link)::before,
+.shell :is(button, .hero-link)::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.shell :is(button, .hero-link)::before {
+  clip-path: polygon(
+    0 var(--cut), var(--cut) 0, 100% 0,
+    100% calc(100% - var(--cut)), calc(100% - var(--cut)) 100%, 0 100%
+  );
+  background:
+    linear-gradient(var(--inlay, transparent), var(--inlay, transparent)) 5px center / 2px 42% no-repeat,
+    linear-gradient(116deg, rgb(224 234 255 / 13%), transparent 34%, rgb(221 228 255 / 4%) 64%, transparent 65%),
+    linear-gradient(172deg, var(--face-top), var(--face-bottom) 86%);
+  box-shadow:
+    inset 0 2px 0 rgb(244 248 255 / 9%),
+    inset 0 -2px 2px rgb(12 18 37 / 18%);
+  transition: filter 130ms ease-out;
+}
+
+/* An open centre keeps the refracted edge from tinting the whole glass face. */
+.shell :is(button, .hero-link)::after {
+  background: linear-gradient(146deg, var(--edge-light), var(--edge-dark) 53%, var(--edge-light));
+  clip-path: polygon(
+    0 var(--cut), var(--cut) 0, 100% 0,
+    100% calc(100% - var(--cut)), calc(100% - var(--cut)) 100%, 0 100%, 0 var(--cut),
+    1px calc(var(--cut) + .4px), 1px calc(100% - 1px),
+    calc(100% - var(--cut) - .4px) calc(100% - 1px),
+    calc(100% - 1px) calc(100% - var(--cut) - .4px),
+    calc(100% - 1px) 1px, calc(var(--cut) + .4px) 1px, 1px calc(var(--cut) + .4px)
+  );
+}
+
+.shell .score-nav button {
+  --cut: 4px;
+}
+
+.shell .score-nav button::before,
+.shell .score-nav button::after {
+  inset: 0;
+}
+
+.shell .quiet-button,
+.shell .v-entry button {
+  --cut: 4px;
+  --face-top: rgb(82 100 141 / 36%);
+  --face-bottom: rgb(29 37 62 / 48%);
+  --edge-light: rgb(192 211 245 / 52%);
+}
+
+.shell .v-entry button {
+  padding: .3em .7em;
+  text-align: start;
+}
+
+.shell button.play-button,
+.shell button[aria-pressed="true"],
+.shell button[data-active="true"] {
+  --face-top: rgb(243 240 255 / 97%);
+  --face-bottom: rgb(177 173 221 / 94%);
+  --edge-light: #ffffff;
+  --edge-dark: #978ab9;
+  color: #1b213a;
+  text-shadow: 0 1px 0 rgb(255 255 255 / 36%);
+}
+
+.shell .play-button {
+  --inlay: #a36b1a;
+  --cut: 8px;
+}
+
+.shell button:disabled {
+  opacity: .53;
+  cursor: wait;
+}
+
+@media (hover: hover) {
+  .shell :is(button:enabled, .hero-link):hover::before {
+    filter: brightness(1.22);
+  }
+  .shell :is(button:enabled, .hero-link):hover::after {
+    background: linear-gradient(146deg, #eef4ff, #b2a0d8 55%, #edf4ff);
+  }
+}
+
+.shell :is(button:enabled, .hero-link):active::before {
+  filter: brightness(.88);
+}
+
+.shell select,
+.shell .custom-range input {
+  color: #f3f5ff;
+  background: linear-gradient(155deg, rgb(75 92 131 / 72%), rgb(27 35 58 / 90%));
+  border: 1px solid rgb(187 204 235 / 64%);
+  border-radius: 2px;
+  box-shadow: inset 0 1px 0 rgb(245 248 255 / 15%);
+}
+
+.shell select option {
+  background-color: #242c46;
+  color: #f3f5ff;
+}
+
+.shell input:is([type="checkbox"], [type="range"]) {
+  accent-color: #d3c7f4;
+}
+
+.shell :is(button, select, input):focus-visible {
+  outline: 2px solid #ffe3a5;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shell :is(button, .hero-link)::before {
+    transition: none;
+  }
+}
+
+@media (forced-colors: active) {
+  .shell :is(button, .hero-link):where(:not([hidden])) {
+    border: 1px solid ButtonText;
+    background: ButtonFace;
+    color: ButtonText;
+    text-shadow: none;
+  }
+  .shell :is(button, .hero-link)::before,
+  .shell :is(button, .hero-link)::after {
+    display: none;
+  }
+  .shell button[aria-pressed="true"] {
+    background: Highlight;
+    color: HighlightText;
+  }
+}
