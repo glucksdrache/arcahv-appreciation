@@ -3,13 +3,14 @@
 
   const section = document.getElementById('release-player');
   if (!section) return;
+  const tr = window.studyLanguage?.text || (en => en);
 
   const videoId = 'eNnL750ViLY';
   const duration = 172.98866213151928;
-  let selectedRange = { name: 'Full track', start: 0, end: duration };
+  let selectedRange = { name: 'Full track', zh: '全曲', start: 0, end: duration };
   const phrases = [
-    { name: 'First phrase', start: 10.10, end: 14.80, linkTime: 12, stamp: '0:12' },
-    { name: 'Return', start: 80.47, end: 85.17, linkTime: 83, stamp: '1:23' },
+    { name: 'First phrase', zh: '首次', start: 10.10, end: 14.80, linkTime: 12, stamp: '0:12' },
+    { name: 'Return', zh: '再现', start: 80.47, end: 85.17, linkTime: 83, stamp: '1:23' },
   ];
 
   function element(tag, content = '') {
@@ -25,6 +26,7 @@
   const status = element('p');
   const viewport = element('div');
   const buttons = [];
+  const phraseLinks = [];
   const rangeLink = element('a');
   const rangeButton = element('button');
   for (const row of [links, controls]) {
@@ -47,11 +49,14 @@
     return Math.floor(whole / 60) + ':' + String(whole % 60).padStart(2, '0');
   }
 
+  const phraseName = phrase => tr(phrase.name, phrase.zh || phrase.name);
+  const linkLabel = (name, time) => tr(name + ' · ' + time + ' on YouTube ↗', name + ' · YouTube ' + time + ' ↗');
   function showRange() {
-    const { name, start, end } = selectedRange;
-    rangeLink.textContent = name + ' · ' + timestamp(start) + ' on YouTube ↗';
+    const { start, end } = selectedRange;
+    const name = phraseName(selectedRange);
+    rangeLink.textContent = linkLabel(name, timestamp(start));
     rangeLink.href = videoUrl(start);
-    rangeButton.textContent = 'Play range · ' + name;
+    rangeButton.textContent = tr('Play range · ' + name, '播放选段 · ' + name);
     rangeButton.title = timestamp(start) + '–' + timestamp(end);
     rangeButton.setAttribute('aria-pressed', String(activePhrase === selectedRange));
   }
@@ -69,6 +74,7 @@
     link.target = '_blank';
     link.rel = 'noopener noreferrer';
     links.append(link);
+    phraseLinks.push(link);
 
     const button = element('button', phrase.name);
     button.type = 'button';
@@ -86,19 +92,38 @@
   let localHasPriority = false;
   let attempt = 0;
   let expiry;
-  showRange();
+  let retry = false;
+  let statusLabel;
+  function translate() {
+    heading.textContent = tr('Original recording', '原曲录音');
+    loadButton.textContent = retry ? tr('Retry YouTube player','重新加载 YouTube 播放器') : tr('Load YouTube player','加载 YouTube 播放器');
+    for (const [i, phrase] of phrases.entries()) {
+      buttons[i].textContent = phraseName(phrase);
+      phraseLinks[i].textContent = linkLabel(phraseName(phrase), phrase.stamp);
+    }
+    const frame = viewport.querySelector('iframe');
+    if (frame) frame.title = tr('Feryquitous – Arcahv, original recording', 'Feryquitous《Arcahv》原曲录音');
+    showRange();
+    if (statusLabel) status.textContent = statusLabel();
+  }
+  translate();
+  window.addEventListener('study-language-change', translate);
   window.addEventListener('study:range-change', event => {
     const { start, end, label } = event.detail || {};
     if (!Number.isFinite(start) || !Number.isFinite(end) || start < 0 || start >= duration ||
         end <= start || end > duration + 0.05 || typeof label !== 'string' || !label.trim()) return;
-    if (selectedRange.start === start && selectedRange.end === Math.min(end, duration) && selectedRange.name === label.trim()) return;
-    selectedRange = { name: label.trim(), start, end: Math.min(end, duration) };
+    if (selectedRange.start === start && selectedRange.end === Math.min(end, duration)) {
+      selectedRange.name = label.trim();
+      delete selectedRange.zh;
+    } else selectedRange = { name: label.trim(), start, end: Math.min(end, duration) };
     showRange();
+    if (statusLabel) status.textContent = statusLabel();
   });
 
-  function say(message) {
-    status.textContent = message;
-    status.hidden = !message;
+  function say(label) {
+    statusLabel = label;
+    status.textContent = label();
+    status.hidden = false;
   }
 
   function selectPhrase(phrase) {
@@ -130,7 +155,7 @@
       startSeconds: phrase.start + requestedOffset,
       endSeconds: phrase.end,
     });
-    say(phrase.name + ' · approximate video timing.');
+    say(() => tr(phraseName(phrase) + ' · approximate video timing.', phraseName(phrase) + ' · 视频时间为近似值。'));
   }
 
   function loadApi() {
@@ -181,14 +206,15 @@
     playRequested = false;
     loadButton.hidden = false;
     loadButton.disabled = false;
-    loadButton.textContent = 'Retry YouTube player';
-    say('The embedded player is unavailable. The links above open the recording on YouTube.');
+    retry = true;
+    translate();
+    say(() => tr('The embedded player is unavailable. The links above open the recording on YouTube.', '播放器加载失败，可用上方链接前往 YouTube 收听原曲。'));
   }
 
   async function mount() {
     const id = ++attempt;
     loadButton.disabled = true;
-    say('Loading YouTube…');
+    say(() => tr('Loading YouTube…', '正在加载 YouTube…'));
     try {
       const yt = await loadApi();
       if (id !== attempt) return;
@@ -198,7 +224,7 @@
       url.searchParams.set('rel', '0');
       if (/^https?:$/.test(window.location.protocol)) url.searchParams.set('origin', window.location.origin);
       const frame = element('iframe');
-      frame.title = 'Feryquitous – Arcahv, original recording';
+      frame.title = tr('Feryquitous – Arcahv, original recording', 'Feryquitous《Arcahv》原曲录音');
       frame.referrerPolicy = 'strict-origin-when-cross-origin';
       frame.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen';
       frame.allowFullscreen = true;
@@ -213,7 +239,7 @@
           loadButton.hidden = true;
           controls.hidden = false;
           controls.style.display = 'flex';
-          say('Switching between First phrase and Return keeps the same offset. Video timing is approximate.');
+          say(() => tr('Switching between First phrase and Return keeps the same offset. Video timing is approximate.', '在「首次」与「再现」之间切换，播放会接在乐句的同一位置。视频时间为近似值。'));
         },
         onStateChange(event) {
           if (id !== attempt) return;
@@ -231,12 +257,12 @@
             localHasPriority = false;
             playRequested = false;
             selectPhrase(undefined);
-            say('Passage ended.');
+            say(() => tr('Passage ended.', '选段播放完毕。'));
           }
         },
         onError() { fallback(id); },
         onAutoplayBlocked() {
-          if (id === attempt) say('Press Play in the video to hear the selected passage.');
+          if (id === attempt) say(() => tr('Press Play in the video to hear the selected passage.', '请点击视频内的播放按钮，收听当前选段。'));
         },
       } });
     } catch {

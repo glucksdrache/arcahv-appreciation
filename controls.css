@@ -1,4 +1,36 @@
 /* The face and its bevel are separate from the hit area and keyboard outline. */
+.site-nav .language-toggle {
+  display: inline-flex;
+  align-self: center;
+  align-items: center;
+  gap: 3px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.site-nav .language-toggle button {
+  font: 500 13px/1.2 "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  padding: 7px 8px;
+}
+html:lang(zh) {
+  --serif: Cormorant, "Songti SC", "Noto Serif CJK SC", SimSun, serif;
+}
+html:lang(zh) body {
+  font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+}
+html:lang(zh) :is(h2, h3) { line-height: 1.35; }
+html:lang(zh) .arrangement-page .masthead h1 { letter-spacing: .015em; line-height: 1.18; }
+html:lang(zh) :is(.arr-cue p, .arr-findings, .v-entry p, .experiment p, .methods p) { line-height: 1.75; }
+@media (max-width: 520px) {
+  .site-nav {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0 12px;
+    padding-block: 4px;
+  }
+  .site-nav a { min-height: 34px; width: fit-content; }
+  .site-nav > :nth-child(2), .site-nav .language-toggle { justify-self: end; }
+  .site-nav .external { margin-left: 0; }
+}
 .shell :is(button, .hero-link) {
   --cut: 6px;
   --face-top: rgb(100 116 154 / 58%);

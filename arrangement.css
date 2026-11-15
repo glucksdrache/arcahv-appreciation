@@ -6,7 +6,7 @@
   color:var(--muted,#b7b6c9);
 }
 
-.arr-meta span {
+.arr-meta .arr-divider {
   padding:0 .45em;
 }
 
@@ -238,7 +238,7 @@
     line-height:1.55;
   }
 
-  .arr-meta span:first-child {
+  .arr-meta [data-zh] + .arr-divider {
     display:block;
     height:0;
     overflow:hidden;

@@ -1,4 +1,8 @@
+import { barNotes, eventKinds, transcriptionMethod } from './arrangement-zh.js';
+
 const $ = (id) => document.getElementById(id);
+const tr = (english, chinese) => window.studyLanguage.text(english, chinese);
+const barName = (number) => tr('Bar ' + number, '第 ' + number + ' 小节');
 const barDuration = 4 * 60 / 191;
 const duration = 498723 / 44100;
 const sourceStart = 5.370;
@@ -21,6 +25,18 @@ let examplePending = false;
 let revision = 0;
 let exampleRevision = 0;
 const audioFiles = new Map();
+let refreshScoreText = () => {};
+let errorMessage;
+const errors = {
+  audio: ['Audio could not be loaded. Check the connection and press Play to retry.', '音频加载失败。请检查网络后，再按一次播放。'],
+  example: ['The common-tone example could not be loaded. Press Play common tones to retry.', '共同音示例加载失败。再按一次「听共同音」即可重试。'],
+  data: ['The score data could not be loaded. Reload the page to retry.', '谱例数据加载失败。请刷新页面重试。']
+};
+
+function showError(key) {
+  errorMessage = key;
+  $('error').textContent = key ? tr(...errors[key]) : '';
+}
 
 function bounds() {
   return selectedBar
@@ -45,22 +61,27 @@ function drawScore() {
   chart.replaceChildren();
   $('score-detail').textContent = '';
   const events = [];
+  const textUpdates = [];
   let selectedMark;
   const [start, end] = bounds();
   const x = (time) => chartLeft + (time - start) * chartWidth / (end - start);
   const add = (name, attributes, text) => chart.appendChild(svgElement(name, attributes, text));
   const label = (x, y, text, className = 'axis') => add('text', { x, y, class: className }, text);
+  const translatedLabel = (x, y, english, chinese, className) => {
+    const node = label(x, y, '', className);
+    textUpdates.push(() => { node.textContent = tr(english, chinese); });
+  };
 
   const lanes = [
-    [37, 51, 'Bass', 'Pedal tones', palette.bass],
-    [95, 135, 'Instruments', 'Selected pitches', palette.harmony],
-    [237, 63, 'Percussion', 'Attack candidates', palette.drums],
-    [307, 43, 'Swell', 'Spectral peak', palette.fx]
+    [37, 51, 'Bass', '贝斯', 'Pedal tones', '持续低音', palette.bass],
+    [95, 135, 'Instruments', '器乐', 'Selected pitches', '主要音高', palette.harmony],
+    [237, 63, 'Percussion', '打击乐', 'Attack candidates', '推测的起音', palette.drums],
+    [307, 43, 'Swell', '渐强音效', 'Spectral peak', '频谱峰值', palette.fx]
   ];
-  for (const [y, height, name, subtitle, fill] of lanes) {
+  for (const [y, height, name, nameZh, subtitle, subtitleZh, fill] of lanes) {
     add('rect', { x: chartLeft, y, width: chartWidth, height, fill, 'fill-opacity': .085 });
-    label(14, y + 20, name, 'lane-name');
-    label(14, y + 36, subtitle);
+    translatedLabel(14, y + 20, name, nameZh, 'lane-name');
+    translatedLabel(14, y + 36, subtitle, subtitleZh);
   }
 
   const step = selectedBar ? barDuration / 12 : barDuration / 4;
@@ -70,20 +91,30 @@ function drawScore() {
     const tickX = x(Math.min(end, time));
     add('line', { x1: tickX, x2: tickX, y1: 29, y2: 350, class: major ? 'grid' : 'grid minor' });
     if (major && time < end - .001) {
-      const text = selectedBar ? 'Beat ' + ((i / 3) % 4 + 1) : 'Bar ' + (i / 4 + 1);
-      label(tickX + 3, 21, text);
+      const number = selectedBar ? (i / 3) % 4 + 1 : i / 4 + 1;
+      translatedLabel(tickX + 3, 21, (selectedBar ? 'Beat ' : 'Bar ') + number,
+        '第 ' + number + (selectedBar ? ' 拍' : ' 小节'));
     }
   }
 
-  function registerMark(mark, event, name) {
-    const description = name + ' · onset ' + event.t.toFixed(3) + ' s in excerpt / ' +
-      (event.t + sourceStart).toFixed(3) + ' s in source · duration ' + event.duration.toFixed(3) + ' s';
+  function registerMark(mark, event, name, chineseName) {
+    const onset = event.t.toFixed(3);
+    const sourceOnset = (event.t + sourceStart).toFixed(3);
+    const length = event.duration.toFixed(3);
     events.push({ mark, time: event.t });
     mark.setAttribute('class', 'arr-event');
     mark.setAttribute('role', 'button');
     mark.setAttribute('tabindex', '-1');
-    mark.setAttribute('aria-label', description);
-    mark.appendChild(svgElement('title', {}, description));
+    const title = mark.appendChild(svgElement('title', {}));
+    textUpdates.push(() => {
+      const description = tr(
+        name + ' · onset ' + onset + ' s in excerpt / ' + sourceOnset + ' s in source · duration ' + length + ' s',
+        chineseName + ' · 起点 ' + onset + ' 秒（原录音 ' + sourceOnset + ' 秒）· 持续 ' + length + ' 秒'
+      );
+      mark.setAttribute('aria-label', description);
+      title.textContent = description;
+      if (mark.hasAttribute('aria-current')) $('score-detail').textContent = description;
+    });
     mark.onfocus = () => {
       if (selectedMark) {
         selectedMark.removeAttribute('aria-current');
@@ -92,7 +123,7 @@ function drawScore() {
       selectedMark = mark;
       mark.setAttribute('aria-current', 'true');
       mark.setAttribute('tabindex', '0');
-      $('score-detail').textContent = description;
+      $('score-detail').textContent = mark.getAttribute('aria-label');
     };
     mark.onclick = (input) => {
       mark.focus({ preventScroll: true });
@@ -116,12 +147,12 @@ function drawScore() {
     };
   }
 
-  function noteBlock(event, y, height, fill, name, description) {
+  function noteBlock(event, y, height, fill, name, description, chineseDescription) {
     if (event.t >= end || event.t + event.duration <= start) return;
     const left = x(Math.max(start, event.t));
     const width = Math.max(2, x(Math.min(end, event.t + event.duration)) - left);
     const block = add('rect', { x: left, y: y - height / 2, width, height, fill, rx: 1.5 });
-    registerMark(block, event, description);
+    registerMark(block, event, description, chineseDescription);
     if (width >= name.length * 7 + 8) label(left + 4, y + 3.4, name, 'note-label');
   }
   const { bass, harmony, drums, fx } = data.score;
@@ -130,29 +161,34 @@ function drawScore() {
   const range = Math.max(1, Math.max(...pitches) - low);
   for (const event of bass) {
     const name = pitch(event.midi);
-    noteBlock(event, event.midi === 31 ? 52 : 73, 15, palette.bass, name, 'Bass · ' + name);
+    noteBlock(event, event.midi === 31 ? 52 : 73, 15, palette.bass, name, 'Bass · ' + name, '贝斯 · ' + name);
   }
   for (const event of harmony) {
     const y = 217 - (event.midi - low) * 109 / range;
     const name = pitch(event.midi);
-    noteBlock(event, y, 11, palette.harmony, name, 'Instruments · ' + name);
+    noteBlock(event, y, 11, palette.harmony, name, 'Instruments · ' + name, '器乐 · ' + name);
   }
   for (const event of drums) {
     // The first bright transient precedes the bar-2 downbeat by about 4 ms.
     if (event.t < start - .009 || event.t >= end) continue;
     const y = [35, 36, 41].includes(event.midi) ? 281 : 258;
     const hit = add('circle', { cx: x(Math.max(start, event.t)), cy: y, r: 2 + event.velocity / 30, fill: palette.drums });
-    registerMark(hit, event, 'Percussion · ' + event.kind);
+    registerMark(hit, event, 'Percussion · ' + event.kind, '打击乐 · ' + eventKinds[event.kind]);
   }
-  for (const event of fx) noteBlock(event, 328, 14, palette.fx, '≈424 Hz', event.kind + ' · ≈424 Hz');
+  for (const event of fx) noteBlock(event, 328, 14, palette.fx, '≈424 Hz',
+    event.kind + ' · ≈424 Hz', eventKinds[event.kind] + ' · ≈424 Hz');
   events.sort((a, b) => a.time - b.time);
   if (events.length) {
     selectedMark = events[0].mark;
     selectedMark.setAttribute('tabindex', '0');
   }
   add('line', { id: 'playhead', class: 'head', y1: 28, y2: 350, x1: x(cursor), x2: x(cursor) });
-  $('bar-title').textContent = selectedBar ? 'Bar ' + selectedBar : 'Bars 1–9';
-  $('bar-note').textContent = data.notes[selectedBar];
+  refreshScoreText = () => {
+    textUpdates.forEach(update => update());
+    $('bar-title').textContent = selectedBar ? barName(selectedBar) : tr('Bars 1–9', '第 1 至 9 小节');
+    $('bar-note').textContent = tr(data.notes[selectedBar], barNotes[selectedBar]);
+  };
+  refreshScoreText();
 }
 
 function setPressed(container, attribute, value) {
@@ -171,7 +207,7 @@ function timeNow(at = context?.currentTime) {
 function updateReadout() {
   const [start, end] = bounds();
   const time = timeNow();
-  $('clock').textContent = time.toFixed(2) + ' / ' + end.toFixed(2) + ' s';
+  $('clock').textContent = time.toFixed(2) + ' / ' + end.toFixed(2) + tr(' s', ' 秒');
   if (!draggingSeek) $('seek').value = time;
   const head = $('playhead');
   if (head) {
@@ -182,9 +218,12 @@ function updateReadout() {
 }
 
 function updateTransport() {
-  $('play').textContent = playback ? 'Ⅱ Pause' : pending ? 'Loading…' : '▶ Play';
-  $('play').setAttribute('aria-label', playback ? 'Pause arrangement' : pending ? 'Cancel loading' : 'Play arrangement');
-  $('common-tones').textContent = example ? '■ Stop common tones' : examplePending ? 'Loading…' : '▶ Play common tones';
+  const loading = tr('Loading…', '加载中…');
+  $('play').textContent = playback ? tr('Ⅱ Pause', 'Ⅱ 暂停') : pending ? loading : tr('▶ Play', '▶ 播放');
+  $('play').setAttribute('aria-label', playback ? tr('Pause arrangement', '暂停谱例') :
+    pending ? tr('Cancel loading', '取消加载') : tr('Play arrangement', '播放谱例'));
+  $('common-tones').textContent = example ? tr('■ Stop common tones', '■ 停止示例') :
+    examplePending ? loading : tr('▶ Play common tones', '▶ 听共同音');
   $('common-tones').setAttribute('aria-pressed', String(Boolean(example)));
 }
 
@@ -259,7 +298,7 @@ async function startPlayback() {
   stopExample();
   const id = ++revision;
   pending = true;
-  $('error').textContent = '';
+  showError();
   updateTransport();
   try {
     await audioContext();
@@ -303,7 +342,7 @@ async function startPlayback() {
   } catch {
     if (id !== revision) return;
     stopPlayback();
-    $('error').textContent = 'Audio could not be loaded. Check the connection and press Play to retry.';
+    showError('audio');
   }
 }
 
@@ -311,7 +350,7 @@ async function playExample() {
   if (example || examplePending) { stopExample(); return; }
   stopPlayback();
   const id = ++exampleRevision;
-  $('error').textContent = '';
+  showError();
   examplePending = true;
   updateTransport();
   try {
@@ -328,7 +367,7 @@ async function playExample() {
   } catch {
     if (id !== exampleRevision) return;
     stopExample();
-    $('error').textContent = 'The common-tone example could not be loaded. Press Play common tones to retry.';
+    showError('example');
   }
 }
 
@@ -363,7 +402,7 @@ for (let bar = 1; bar <= 9; bar++) {
   button.type = 'button';
   button.dataset.bar = bar;
   button.textContent = bar;
-  button.setAttribute('aria-label', 'Bar ' + bar);
+  button.setAttribute('aria-label', barName(bar));
   $('bars').appendChild(button);
 }
 for (const button of $('bars').querySelectorAll('button')) {
@@ -407,12 +446,25 @@ $('score').onclick = (event) => {
 };
 window.addEventListener('pagehide', () => { stopPlayback(); stopExample(); });
 
+function updateLanguage() {
+  for (const button of $('bars').querySelectorAll('button[data-bar]:not([data-bar="0"])')) {
+    button.setAttribute('aria-label', barName(button.dataset.bar));
+  }
+  if (data) $('method').textContent = tr(data.method, transcriptionMethod);
+  refreshScoreText();
+  updateTransport();
+  updateReadout();
+  showError(errorMessage);
+}
+window.addEventListener('study-language-change', updateLanguage);
+updateLanguage();
+
 try {
   const response = await fetch('data/intro.json');
   if (!response.ok) throw new Error();
   data = await response.json();
-  $('method').textContent = data.method;
+  $('method').textContent = tr(data.method, transcriptionMethod);
   selectBar(0);
 } catch {
-  $('error').textContent = 'The score data could not be loaded. Reload the page to retry.';
+  showError('data');
 }

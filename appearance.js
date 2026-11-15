@@ -7,6 +7,16 @@
   const reset = document.getElementById('reset-scene');
   const status = document.getElementById('scene-status');
   let currentUrl;
+  let statusLabel;
+  const lang = window.studyLanguage || {text: en => en, error: (e,en) => e?.message || en};
+  function renderStatus() {
+    if (status && statusLabel) status.textContent = ' ' + statusLabel();
+  }
+  function sceneError(err) {
+    statusLabel = () => lang.error(err, 'Choose an image and try again.', '请选择一张图片，再试一次。');
+    renderStatus();
+  }
+  window.addEventListener('study-language-change', renderStatus);
 
   async function localOverride(file) {
     // Older versions saved the original VS-8 image as a local background.
@@ -36,11 +46,13 @@
       const override = await localOverride(file);
       const result = await studyMedia.setScene(override);
       show(override);
-      status.textContent = override
-        ? (result.persistent ? ' Local scene saved in this browser.' : ' Local scene applied for this visit.')
-        : ' VS-8 background restored.';
+      statusLabel = () => override
+        ? (result.persistent ? lang.text('Local scene saved in this browser.', '背景已保存到此浏览器。')
+          : lang.text('Local scene applied for this visit.', '本次浏览已换用所选背景。'))
+        : lang.text('VS-8 background restored.', '已恢复 VS-8 背景。');
+      renderStatus();
     } catch (err) {
-      status.textContent = ' ' + err.message;
+      sceneError(err);
     } finally {
       choose.disabled = reset.disabled = false;
     }
@@ -51,7 +63,7 @@
     try {
       show(await localOverride(await studyMedia.getScene()));
     } catch (err) {
-      if (status) status.textContent = ' ' + err.message;
+      sceneError(err);
     } finally {
       if (choose) choose.disabled = false;
     }

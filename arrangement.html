@@ -4,91 +4,93 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#14162a">
-  <title>Nine-bar arrangement · Arcahv</title>
-  <link rel="stylesheet" href="style.css?v=vs8">
-  <link rel="stylesheet" href="arrangement.css">
-  <link rel="stylesheet" href="controls.css">
+  <title data-zh="九小节配器谱 · Arcahv">Nine-bar arrangement · Arcahv</title>
+  <link rel="stylesheet" href="style.css?v=bilingual">
+  <link rel="stylesheet" href="arrangement.css?v=bilingual">
+  <link rel="stylesheet" href="controls.css?v=bilingual">
   <link rel="icon" href="data:,">
-  <script src="media-source.js?v=public-arrangement"></script>
-  <script src="appearance.js?v=vs8" defer></script>
-  <script type="module" src="arrangement.js?v=public-arrangement"></script>
+  <script src="language.js" defer></script>
+  <script src="media-source.js?v=bilingual"></script>
+  <script src="appearance.js?v=bilingual" defer></script>
+  <script type="module" src="arrangement.js?v=bilingual"></script>
 </head>
 <body class="arrangement-page">
   <main class="shell">
-    <nav class="site-nav" aria-label="Study views">
-      <a href="index.html">Full track</a>
-      <a href="arrangement.html" aria-current="page">Nine-bar arrangement</a>
-      <a class="external" href="https://github.com/glucksdrache/arcahv-appreciation/blob/main/README.md">Appreciation ↗</a>
+    <nav class="site-nav" aria-label="Study views" data-zh-aria-label="站内导航">
+      <a href="index.html" data-zh="全曲听辨">Full track</a>
+      <a href="arrangement.html" aria-current="page" data-zh="九小节配器谱">Nine-bar arrangement</a>
+      <a class="external" href="https://github.com/glucksdrache/arcahv-appreciation/blob/main/README.md" data-zh-href="https://github.com/glucksdrache/arcahv-appreciation/blob/main/README.zh-CN.md" data-zh="赏析 ↗">Appreciation ↗</a>
+      <button type="button" class="language-toggle" data-language-toggle>English / 中文</button>
     </nav>
     <header class="masthead">
       <div>
         <p class="eyebrow">Feryquitous · Arcahv</p>
-        <h1>Nine-bar arrangement</h1>
-        <p class="arr-meta">5.370–16.679 s in the source recording <span>·</span> 191 BPM <span>·</span> 4/4</p>
+        <h1 data-zh="九小节配器谱">Nine-bar arrangement</h1>
+        <p class="arr-meta"><span data-zh="原录音 5.370–16.679 秒">5.370–16.679 s in the source recording</span> <span class="arr-divider">·</span> 191 BPM <span class="arr-divider">·</span> 4/4</p>
       </div>
     </header>
 
-    <section class="panel arr-player" aria-label="Arrangement player">
+    <section class="panel arr-player" aria-label="Arrangement player" data-zh-aria-label="配器谱播放器">
       <div class="arr-picks">
-        <div class="button-row arr-bars" id="bars" role="group" aria-label="Select a bar">
-          <span class="arr-label">Bars</span>
-          <button type="button" data-bar="0" aria-pressed="true">All nine</button>
+        <div class="button-row arr-bars" id="bars" role="group" aria-label="Select a bar" data-zh-aria-label="选择小节">
+          <span class="arr-label" data-zh="小节">Bars</span>
+          <button type="button" data-bar="0" aria-pressed="true" data-zh="全部九小节">All nine</button>
         </div>
       </div>
       <div class="transport arr-transport">
         <button id="play" type="button" class="play-button" aria-label="Play arrangement">▶ Play</button>
         <output id="clock" class="arr-clock" aria-live="off">0.00 / 11.31 s</output>
-        <label class="arr-repeat"><input type="checkbox" id="loop"> Loop selection</label>
-        <div class="button-row arr-modes" id="modes" role="group" aria-label="Audio source">
-          <button type="button" data-mode="1" aria-pressed="true">Reduction</button>
-          <button type="button" data-mode="0" aria-pressed="false">Recording</button>
+        <label class="arr-repeat"><input type="checkbox" id="loop"> <span data-zh="循环选段">Loop selection</span></label>
+        <div class="button-row arr-modes" id="modes" role="group" aria-label="Audio source" data-zh-aria-label="音源">
+          <button type="button" data-mode="1" aria-pressed="true" data-zh="合成谱例">Reduction</button>
+          <button type="button" data-mode="0" aria-pressed="false" data-zh="录音分轨">Recording</button>
         </div>
       </div>
-      <div class="button-row arr-roles" id="roles" role="group" aria-label="Audible parts">
-        <span class="arr-label">Parts</span>
-        <button type="button" data-role="-1" aria-pressed="true">All accompaniment</button>
-        <button type="button" data-role="0" aria-pressed="false">Percussion</button>
-        <button type="button" data-role="1" aria-pressed="false">Bass</button>
-        <button type="button" data-role="2" aria-pressed="false">Instruments &amp; effects</button>
+      <div class="button-row arr-roles" id="roles" role="group" aria-label="Audible parts" data-zh-aria-label="选择试听声部">
+        <span class="arr-label" data-zh="声部">Parts</span>
+        <button type="button" data-role="-1" aria-pressed="true" data-zh="全部伴奏">All accompaniment</button>
+        <button type="button" data-role="0" aria-pressed="false" data-zh="打击乐">Percussion</button>
+        <button type="button" data-role="1" aria-pressed="false" data-zh="贝斯">Bass</button>
+        <button type="button" data-role="2" aria-pressed="false" data-zh="器乐与音效">Instruments &amp; effects</button>
       </div>
       <div class="chart-scroll arr-chart-scroll">
         <svg id="score" viewBox="0 0 960 365" role="group"
-          aria-label="Score events. Use the left and right arrow keys to inspect events, and Enter or Space to seek."></svg>
+          aria-label="Score events. Use the left and right arrow keys to inspect events, and Enter or Space to seek." data-zh-aria-label="配器谱。用左右方向键查看各个音符和起音，按回车或空格跳到相应位置。"></svg>
       </div>
       <p id="score-detail" class="arr-score-detail"></p>
-      <div class="arr-seek"><input id="seek" aria-label="Position in the excerpt, in seconds" type="range" min="0" max="11.309" value="0" step="0.001"></div>
+      <div class="arr-seek"><input id="seek" aria-label="Position in the excerpt, in seconds" data-zh-aria-label="选段内的播放位置（秒）" type="range" min="0" max="11.309" value="0" step="0.001"></div>
       <div class="arr-cue"><strong id="bar-title">Bars 1–9</strong><p id="bar-note"></p></div>
     </section>
     <p id="error" role="status" class="arr-error"></p>
 
     <div class="arr-reading">
       <section class="panel arr-copy">
-        <h2>Three common tones</h2>
-        <p>The synthesized example holds D4, F4 and A4 while the bass moves from G1 to E♭1.</p>
+        <h2 data-zh="三个共同音">Three common tones</h2>
+        <p data-zh="谱例中，D4、F4 和 A4 持续不变，低音从 G1 降到 E♭1。">The synthesized example holds D4, F4 and A4 while the bass moves from G1 to E♭1.</p>
         <table>
-          <thead><tr><th scope="col">Bass</th><th scope="col">D</th><th scope="col">F</th><th scope="col">A</th></tr></thead>
+          <thead><tr><th scope="col" data-zh="低音">Bass</th><th scope="col">D</th><th scope="col">F</th><th scope="col">A</th></tr></thead>
           <tbody>
-            <tr><th scope="row">G</th><td>Fifth</td><td>Minor seventh</td><td>Ninth</td></tr>
-            <tr><th scope="row">E♭</th><td>Major seventh</td><td>Ninth</td><td>Raised eleventh</td></tr>
+            <tr><th scope="row">G</th><td data-zh="纯五度">Fifth</td><td data-zh="小七度">Minor seventh</td><td data-zh="九度">Ninth</td></tr>
+            <tr><th scope="row">E♭</th><td data-zh="大七度">Major seventh</td><td data-zh="九度">Ninth</td><td data-zh="升十一度">Raised eleventh</td></tr>
           </tbody>
         </table>
         <button id="common-tones" type="button" aria-pressed="false">▶ Play common tones</button>
-        <p>In bar 7 of the recording, A3, C4, D4 and F4 overlap above E♭1. <b>Dm7/E♭</b> describes this local voicing.</p>
+        <p><span data-zh="录音里，第 7 小节的低音 E♭1 上方同时响着 A3、C4、D4 和 F4，可记作 ">In bar 7 of the recording, A3, C4, D4 and F4 overlap above E♭1. </span><b>Dm7/E♭</b><span data-zh="。"> describes this local voicing.</span></p>
       </section>
       <section class="panel arr-copy">
-        <h2>Timbre and timing</h2>
+        <h2 data-zh="音色与节奏">Timbre and timing</h2>
         <dl class="arr-findings">
-          <div><dt>Bass</dt><dd>The second harmonic often exceeds the fundamental. The harmonic series supports G1 and E♭1 as the two pedal tones.</dd></div>
-          <div><dt>Percussion</dt><dd>The first accent in bar 2 has a bright attack. Its low-frequency body peaks about 40 ms later. Several pulses in the middle bars follow a triplet subdivision.</dd></div>
-          <div><dt>Inner parts</dt><dd>D4 and A3 persist over several beats. F4 and C4 enter at different points before the notes overlap in bar 7.</dd></div>
-          <div><dt>Swell</dt><dd>A peak near 424 Hz remains steady as the sound grows. A similar waveform returns 31½ beats later.</dd></div>
+          <div><dt data-zh="贝斯">Bass</dt><dd data-zh="第二谐波常比基频更强。根据整组谐波，可以辨出 G1 和 E♭1 两个持续低音。">The second harmonic often exceeds the fundamental. The harmonic series supports G1 and E♭1 as the two pedal tones.</dd></div>
+          <div><dt data-zh="打击乐">Percussion</dt><dd data-zh="第 2 小节的第一个重音以明亮的敲击声起头，约 40 毫秒后低频才达到峰值。片段中部的几次低频脉冲落在三连音的位置上。">The first accent in bar 2 has a bright attack. Its low-frequency body peaks about 40 ms later. Several pulses in the middle bars follow a triplet subdivision.</dd></div>
+          <div><dt data-zh="内声部">Inner parts</dt><dd data-zh="D4 和 A3 延续数拍，F4 和 C4 先后加入，到第 7 小节四个音叠在一起。">D4 and A3 persist over several beats. F4 and C4 enter at different points before the notes overlap in bar 7.</dd></div>
+          <div><dt data-zh="渐强音效">Swell</dt><dd data-zh="音量渐强时，频谱中的一个峰始终在 424 Hz 附近。31 拍半后，相似的波形再次出现。">A peak near 424 Hz remains steady as the sound grows. A similar waveform returns 31½ beats later.</dd></div>
         </dl>
       </section>
     </div>
     <details class="arr-method">
-      <summary>Transcription notes</summary>
+      <summary data-zh="转写说明">Transcription notes</summary>
       <p id="method"></p>
-      <p><a href="data/arrangement.mid" download>Download the nine-bar MIDI reduction</a></p>
+      <p><a href="data/arrangement.mid" download data-zh="下载九小节谱例（MIDI）">Download the nine-bar MIDI reduction</a></p>
     </details>
   </main>
 </body>

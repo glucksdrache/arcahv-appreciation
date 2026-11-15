@@ -181,7 +181,7 @@ a {
   font-weight: 600;
   text-shadow: 0 1px 4px #19162b;
 }
-.hero-link span {
+.hero-link [aria-hidden] {
   color: var(--gold);
   margin-left: 5px;
 }
@@ -448,7 +448,7 @@ select {
 .excerpt-cues button {
   font-size: 12px;
 }
-.excerpt-cues button span {
+.excerpt-cues button span:first-child {
   color: var(--gold);
   font-variant-numeric: tabular-nums;
   margin-inline-end: 3px;

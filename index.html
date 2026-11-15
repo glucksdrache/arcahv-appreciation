@@ -4,123 +4,125 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#101223">
-  <meta name="description" content="A time-aligned listening study of Arcahv by Feryquitous, with vocal pitch, bass, instrumental chroma and two A/B comparisons.">
-  <title>Arcahv · Listening study</title>
+  <meta name="description" data-zh-content="Feryquitous《Arcahv》全曲听辨。跟随时间轴查看人声音高、低音和器乐音级，对照聆听两处乐句。" content="A time-aligned listening study of Arcahv by Feryquitous, with vocal pitch, bass, instrumental chroma and two A/B comparisons.">
+  <title data-zh="Arcahv · 全曲听辨">Arcahv · Listening study</title>
   <link rel="icon" href="data:,">
-  <link rel="stylesheet" href="style.css?v=opening-excerpt">
-  <link rel="stylesheet" href="controls.css">
-  <script src="media-source.js?v=harmonic-resynthesis" defer></script>
-  <script src="appearance.js?v=vs8" defer></script>
-  <script src="official-player.js" defer></script>
-  <script src="full.js?v=audio-import" type="module"></script>
+  <link rel="stylesheet" href="style.css?v=bilingual">
+  <link rel="stylesheet" href="controls.css?v=bilingual">
+  <script src="language.js?v=bilingual" defer></script>
+  <script src="media-source.js?v=bilingual" defer></script>
+  <script src="appearance.js?v=bilingual" defer></script>
+  <script src="official-player.js?v=bilingual" defer></script>
+  <script src="full.js?v=bilingual" type="module"></script>
 </head>
 <body>
 <main class="shell">
-  <nav class="site-nav" aria-label="Study views">
-    <a href="index.html" aria-current="page">Full track</a>
-    <a href="arrangement.html">Nine-bar arrangement</a>
-    <a class="external" href="https://github.com/glucksdrache/arcahv-appreciation/blob/main/README.md">Appreciation ↗</a>
+  <nav class="site-nav" aria-label="Study views" data-zh-aria-label="站内导航">
+    <a href="index.html" aria-current="page" data-zh="全曲听辨">Full track</a>
+    <a href="arrangement.html" data-zh="九小节配器谱">Nine-bar arrangement</a>
+    <a class="external" href="https://github.com/glucksdrache/arcahv-appreciation/blob/main/README.md" data-zh-href="https://github.com/glucksdrache/arcahv-appreciation/blob/main/README.zh-CN.md" data-zh="赏析 ↗">Appreciation ↗</a>
+    <button type="button" class="language-toggle" data-language-toggle>English / 中文</button>
   </nav>
   <header class="masthead">
     <div><p class="eyebrow">Feryquitous</p><h1>Arcahv</h1>
-      <p class="track-meta"><span>2:52.99</span><i></i><span>Opening: 191 BPM</span><i></i><span>4/4</span></p>
+      <p class="track-meta"><span>2:52.99</span><i></i><span data-zh="开头 191 BPM">Opening: 191 BPM</span><i></i><span>4/4</span></p>
     </div>
-    <a class="hero-link" href="#comparisons">Compare phrases <span aria-hidden="true">↘</span></a>
+    <a class="hero-link" href="#comparisons"><span data-zh="乐句对照">Compare phrases</span> <span aria-hidden="true">↘</span></a>
   </header>
   <section class="panel score-panel" id="listen" aria-labelledby="score-title">
-    <div class="panel-head"><h2 id="score-title">Listening score</h2><a href="#release-player">Artist recording ↗</a></div>
-    <div class="score-nav" id="v-map" aria-label="Track sections"></div>
-    <div id="v-presets" class="button-row scopes" aria-label="Listening range">
-      <span class="group-label">Range</span><button data-seg="whole">Full track</button><button data-seg="opening">Opening</button>
-      <button data-seg="phrase">EH → KELEPZO IGAH</button><button data-seg="turn">Bass change</button><button data-seg="return">Vocal return</button>
+    <div class="panel-head"><h2 id="score-title" data-zh="听辨谱">Listening score</h2><a href="#release-player" data-zh="原曲录音 ↗">Artist recording ↗</a></div>
+    <div class="score-nav" id="v-map" aria-label="Track sections" data-zh-aria-label="全曲段落"></div>
+    <div id="v-presets" class="button-row scopes" aria-label="Listening range" data-zh-aria-label="试听范围">
+      <span class="group-label" data-zh="播放范围">Range</span><button data-seg="whole" data-zh="全曲">Full track</button><button data-seg="opening" data-zh="开头">Opening</button>
+      <button data-seg="phrase">EH → KELEPZO IGAH</button><button data-seg="turn" data-zh="低音转换">Bass change</button><button data-seg="return" data-zh="人声再现">Vocal return</button>
     </div>
     <div class="transport">
       <button class="play-button" id="v-play" aria-label="Play">▶ Play</button><output class="clock" id="v-clock">0:00.00 / 2:52.99</output>
-      <label><input type="checkbox" id="v-loop"> Loop</label>
-      <details class="custom-range" id="v-custom"><summary>Set range</summary>
-        <label>From <input id="v-a" type="number" min="0" max="172.99" step=".01"></label>
-        <label>To <input id="v-b" type="number" min="0" max="172.99" step=".01"> s</label><button id="v-apply">Apply</button>
+      <label><input type="checkbox" id="v-loop"> <span data-zh="循环播放">Loop</span></label>
+      <details class="custom-range" id="v-custom"><summary data-zh="自选片段">Set range</summary>
+        <label><span data-zh="起点">From</span> <input id="v-a" type="number" min="0" max="172.99" step=".01"></label>
+        <label><span data-zh="终点">To</span> <input id="v-b" type="number" min="0" max="172.99" step=".01"> <span data-zh="秒">s</span></label><button id="v-apply" data-zh="应用">Apply</button>
       </details>
     </div>
-    <div class="button-row roles" id="v-modes" aria-label="Audible parts">
-      <span class="group-label">Parts</span><button data-vmode="0">Mix</button><button data-vmode="1">Vocal</button><button data-vmode="2">Accompaniment</button><button data-vmode="3">Vocal + bass</button><button data-vmode="6">Bass</button><button data-vmode="7">Drums</button><button data-vmode="8">Instruments</button>
+    <div class="button-row roles" id="v-modes" aria-label="Audible parts" data-zh-aria-label="试听声部">
+      <span class="group-label" data-zh="声部">Parts</span><button data-vmode="0" data-zh="混音">Mix</button><button data-vmode="1" data-zh="人声">Vocal</button><button data-vmode="2" data-zh="伴奏">Accompaniment</button><button data-vmode="3" data-zh="人声与贝斯">Vocal + bass</button><button data-vmode="6" data-zh="贝斯">Bass</button><button data-vmode="7" data-zh="鼓组">Drums</button><button data-vmode="8" data-zh="器乐">Instruments</button>
     </div>
-    <div class="source-row"><label for="source-choice">Audio source</label><select id="source-choice" aria-controls="stem-controls"><option value="guide">Synthesized reduction</option><option value="reference">Recorded stems</option></select>
+    <div class="source-row"><label for="source-choice" data-zh="音源">Audio source</label><select id="source-choice" aria-controls="stem-controls"><option value="guide" data-zh="合成还原">Synthesized reduction</option><option value="reference" data-zh="录音分轨">Recorded stems</option></select>
     </div>
     <div id="stem-controls" class="stem-controls" hidden>
       <div class="stem-row">
-        <label for="recording-range">Recording</label>
+        <label for="recording-range" data-zh="录音片段">Recording</label>
         <select id="recording-range" aria-controls="excerpt-controls import-controls">
-          <option value="excerpt">Opening excerpt</option>
-          <option value="full">Full track · local files</option>
+          <option value="excerpt" data-zh="开头九小节">Opening excerpt</option>
+          <option value="full" data-zh="全曲 · 本地文件">Full track · local files</option>
         </select>
       </div>
       <div id="excerpt-controls">
         <div class="excerpt-heading">
-          <span>Nine bars · 5.370–16.679 s</span>
+          <span data-zh="九小节 · 5.370–16.679 秒">Nine bars · 5.370–16.679 s</span>
           <a href="https://feryquitous.bandcamp.com/album/arcahv">Feryquitous · © 2020 lowiro</a>
         </div>
-        <div class="excerpt-parts" role="group" aria-label="Audible stems">
+        <div class="excerpt-parts" role="group" aria-label="Audible stems" data-zh-aria-label="试听分轨">
           <div class="excerpt-part">
-            <button type="button" data-excerpt-part="vocal" aria-pressed="true">Vocal</button>
+            <button type="button" data-excerpt-part="vocal" aria-pressed="true" data-zh="人声">Vocal</button>
             <span class="excerpt-wave" aria-hidden="true"><svg viewBox="0 0 319 42" preserveAspectRatio="none"><use href="media/excerpt/waveforms.svg#vocal"/></svg></span>
           </div>
           <div class="excerpt-part">
-            <button type="button" data-excerpt-part="bass" aria-pressed="true">Bass</button>
+            <button type="button" data-excerpt-part="bass" aria-pressed="true" data-zh="贝斯">Bass</button>
             <span class="excerpt-wave" aria-hidden="true"><svg viewBox="0 0 319 42" preserveAspectRatio="none"><use href="media/excerpt/waveforms.svg#bass"/></svg></span>
           </div>
           <div class="excerpt-part">
-            <button type="button" data-excerpt-part="drums" aria-pressed="true">Drums</button>
+            <button type="button" data-excerpt-part="drums" aria-pressed="true" data-zh="鼓组">Drums</button>
             <span class="excerpt-wave" aria-hidden="true"><svg viewBox="0 0 319 42" preserveAspectRatio="none"><use href="media/excerpt/waveforms.svg#drums"/></svg></span>
           </div>
           <div class="excerpt-part">
-            <button type="button" data-excerpt-part="instruments" aria-pressed="true">Instruments</button>
+            <button type="button" data-excerpt-part="instruments" aria-pressed="true" data-zh="器乐">Instruments</button>
             <span class="excerpt-wave" aria-hidden="true"><svg viewBox="0 0 319 42" preserveAspectRatio="none"><use href="media/excerpt/waveforms.svg#instruments"/></svg></span>
           </div>
         </div>
-        <div class="excerpt-cues" role="group" aria-label="Seek to a listening cue">
-          <button type="button" data-excerpt-cue="10.10"><span>≈10.10 s</span> Vocal phrase onset</button>
-          <button type="button" data-excerpt-cue="11.653"><span>11.65 s</span> Bass G1 → E♭1</button>
-          <button type="button" data-excerpt-cue="12.77"><span>12.77 s</span> Held B♭4 over E♭1</button>
+        <div class="excerpt-cues" role="group" aria-label="Seek to a listening cue" data-zh-aria-label="跳到听辨位置">
+          <button type="button" data-excerpt-cue="10.10"><span data-zh="约 10.10 秒">≈10.10 s</span> <span data-zh="人声乐句起点">Vocal phrase onset</span></button>
+          <button type="button" data-excerpt-cue="11.653"><span data-zh="11.65 秒">11.65 s</span> <span data-zh="低音从 G1 转到 E♭1">Bass G1 → E♭1</span></button>
+          <button type="button" data-excerpt-cue="12.77"><span data-zh="12.77 秒">12.77 s</span> <span data-zh="低音 E♭1 上方的 B♭4 长音">Held B♭4 over E♭1</span></button>
         </div>
       </div>
       <div id="import-controls" hidden>
         <div class="stem-row">
-          <label for="stem-role">Choose a part</label>
-          <select id="stem-role"><option value="1">Vocal</option><option value="6">Bass</option><option value="7">Drums</option><option value="8">Instruments</option><option value="2">Accompaniment</option><option value="3">Vocal + bass</option><option value="0">Mix</option></select>
-          <button type="button" id="import-stem" aria-describedby="stem-hint">Open audio file</button>
+          <label for="stem-role" data-zh="选择声部">Choose a part</label>
+          <select id="stem-role"><option value="1" data-zh="人声">Vocal</option><option value="6" data-zh="贝斯">Bass</option><option value="7" data-zh="鼓组">Drums</option><option value="8" data-zh="器乐">Instruments</option><option value="2" data-zh="伴奏">Accompaniment</option><option value="3" data-zh="人声与贝斯">Vocal + bass</option><option value="0" data-zh="混音">Mix</option></select>
+          <button type="button" id="import-stem" aria-describedby="stem-hint" data-zh="打开音频文件">Open audio file</button>
           <input id="stem-file" type="file" accept="audio/*,.wav,.flac,.ogg,.opus,.m4a,.mp3,.aac,.aif,.aiff" hidden>
         </div>
-        <p id="stem-hint">One stem per file · 0:00–2:52.99 · Local playback</p>
+        <p id="stem-hint" data-zh="每个文件一个声部 · 0:00–2:52.99 · 在本机播放">One stem per file · 0:00–2:52.99 · Local playback</p>
       </div>
       <p id="ref-status" role="status"></p>
     </div>
     <p id="v-status" role="alert"></p>
-    <div class="chart-scroll"><svg id="v-chart" viewBox="0 0 960 418" role="img" aria-label="Time-aligned vocal pitch, vocal level, bass, instrumental chroma and percussion level"></svg></div>
-    <div class="seek-row"><input type="range" id="v-slider" step=".01" aria-label="Position in the source recording"></div>
-    <div class="readouts"><span>Audition <strong id="v-listening">Mix</strong></span><span>Vocal pitch <strong id="v-current-pitch">—</strong></span><span>Vocal RMS <strong id="v-current-db">—</strong></span><span>Bass <strong id="v-current-bass">—</strong></span><span>Chroma <strong id="v-current-harm">—</strong></span></div>
+    <div class="chart-scroll"><svg id="v-chart" viewBox="0 0 960 418" role="img" aria-label="Time-aligned vocal pitch, vocal level, bass, instrumental chroma and percussion level" data-zh-aria-label="沿时间轴显示人声音高、人声电平、低音、器乐音级与打击乐电平"></svg></div>
+    <div class="seek-row"><input type="range" id="v-slider" step=".01" aria-label="Position in the source recording" data-zh-aria-label="原录音播放位置"></div>
+    <div class="readouts"><span><span data-zh="当前声部">Audition</span> <strong id="v-listening">Mix</strong></span><span><span data-zh="人声音高">Vocal pitch</span> <strong id="v-current-pitch">—</strong></span><span><span data-zh="人声电平">Vocal RMS</span> <strong id="v-current-db">—</strong></span><span><span data-zh="低音">Bass</span> <strong id="v-current-bass">—</strong></span><span><span data-zh="音级">Chroma</span> <strong id="v-current-harm">—</strong></span></div>
     <p id="v-section-note" class="section-note" aria-live="polite"></p>
   </section>
   <section id="comparisons" class="comparisons">
-    <h2>Phrase comparisons</h2>
+    <h2 data-zh="乐句对照">Phrase comparisons</h2>
     <div class="pair">
       <article class="panel experiment">
-        <h3>One B♭4, two bass notes</h3><p>The vocal holds B♭4 at 12.77–13.80 s and again at 83.14–84.17 s. E♭1 beneath the first phrase gives a perfect fifth by pitch class. E2 beneath the return gives a tritone.</p>
-        <div class="button-row"><button data-natural="0">First phrase · E♭1</button><button data-natural="1">Return · E2</button></div>
+        <h3 data-zh="同一个 B♭4，两种低音">One B♭4, two bass notes</h3><p data-zh="人声在 12.77–13.80 秒和 83.14–84.17 秒两次停留在 B♭4 上。把音程折算到一个八度内，第一次的低音 E♭1 与人声构成纯五度，第二次低音换成 E2，音程随之变为三全音。">The vocal holds B♭4 at 12.77–13.80 s and again at 83.14–84.17 s. E♭1 beneath the first phrase gives a perfect fifth by pitch class. E2 beneath the return gives a tritone.</p>
+        <div class="button-row"><button data-natural="0" data-zh="初次出现 · E♭1">First phrase · E♭1</button><button data-natural="1" data-zh="乐句再现 · E2">Return · E2</button></div>
       </article>
       <article class="panel experiment">
-        <h3>Change the bass alone</h3><p>Both versions use the same upper line and bass envelope from 9.65 to 14.75 s. At 11.653 s one bass moves down a major third to E♭1. The other holds G1.</p>
-        <div class="button-row"><button data-vmode="4">G1 → E♭1</button><button data-vmode="5">Hold G1</button></div>
+        <h3 data-zh="只换低音">Change the bass alone</h3><p data-zh="两段都对应原曲的 9.65–14.75 秒，上方旋律和低音的强弱起伏相同。一段在 11.653 秒从 G1 下行大三度到 E♭1，另一段始终保持 G1。">Both versions use the same upper line and bass envelope from 9.65 to 14.75 s. At 11.653 s one bass moves down a major third to E♭1. The other holds G1.</p>
+        <div class="button-row"><button data-vmode="4">G1 → E♭1</button><button data-vmode="5" data-zh="保持 G1">Hold G1</button></div>
       </article>
     </div>
   </section>
-  <section class="panel" id="release-player" aria-label="Original recording"></section>
-  <section class="notes" aria-labelledby="guide-title"><h2 id="guide-title">Section notes</h2><div id="v-index" class="index"></div></section>
-  <details class="panel methods"><summary>Measurements and sources</summary>
-    <p>The horizontal axis follows the source file, including its opening silence. The score plots the vocal contour at 40 ms intervals. Gaps mark frames without a sufficiently clear periodic pitch. Vocal and percussion levels are short-time RMS in dBFS.</p>
-    <p>The bass estimate follows the lower harmonics. Instrumental chroma folds spectral peaks into twelve pitch classes. Overtones and separation bleed can contribute to a peak. The sustained D, F, A and C above E♭ around 13.2–13.8 s support a local Dm7/E♭ reading.</p>
-    <p>Oscillators follow the vocal slides, bass harmonics and instrumental pitches in their measured registers. Filtered noise supplies breath, percussion attacks and effect tails. The recorded excerpt presents the four separated parts over the opening nine bars.</p>
-    <p>The background uses a blurred version of lowiro’s artwork for <em>Arcaea</em>, <a href="https://arcaea.fandom.com/wiki/Story/Black_Fate#Entry_VS-8">Black Fate, entry VS-8</a>. <button id="import-scene" class="quiet-button">Choose local background</button> <button id="reset-scene" class="quiet-button" hidden>Restore VS-8 background</button><input hidden type="file" accept="image/jpeg,image/png,image/webp" id="scene-file"><span id="scene-status" role="status"></span></p>
+  <section class="panel" id="release-player" aria-label="Original recording" data-zh-aria-label="原曲录音"></section>
+  <section class="notes" aria-labelledby="guide-title"><h2 id="guide-title" data-zh="分段听辨">Section notes</h2><div id="v-index" class="index"></div></section>
+  <details class="panel methods"><summary data-zh="分析方法与来源">Measurements and sources</summary>
+    <p data-zh="横轴从原录音的起始静音算起。人声音高曲线每 40 毫秒取一个点，音高难以辨认处留白。人声与打击乐的电平取短时均方根值，以 dBFS 表示。">The horizontal axis follows the source file, including its opening silence. The score plots the vocal contour at 40 ms intervals. Gaps mark frames without a sufficiently clear periodic pitch. Vocal and percussion levels are short-time RMS in dBFS.</p>
+    <p data-zh="低音的音高依据低次谐波估算。器乐部分将各个八度的频谱峰值归入十二个音级，泛音和分轨时串入的其他声部也会影响结果。约 13.2–13.8 秒，D、F、A、C 在低音 E♭ 上方持续，这一处可以听作 Dm7/E♭。">The bass estimate follows the lower harmonics. Instrumental chroma folds spectral peaks into twelve pitch classes. Overtones and separation bleed can contribute to a peak. The sustained D, F, A and C above E♭ around 13.2–13.8 s support a local Dm7/E♭ reading.</p>
+    <p data-zh="合成还原用振荡器重现人声的滑音、贝斯的谐波，以及器乐在各自音区中的音高，再用滤波后的噪声模拟气声、打击乐的起音和音效的尾音。开头九小节也可以直接听录音分出的四个声部。">Oscillators follow the vocal slides, bass harmonics and instrumental pitches in their measured registers. Filtered noise supplies breath, percussion attacks and effect tails. The recorded excerpt presents the four separated parts over the opening nine bars.</p>
+    <p><span data-zh="背景取自 lowiro 为">The background uses a blurred version of lowiro’s artwork for </span><em data-zh="《Arcaea》">Arcaea</em><span data-zh="绘制的">, </span><a href="https://arcaea.fandom.com/wiki/Story/Black_Fate#Entry_VS-8" data-zh="Black Fate 篇 VS-8">Black Fate, entry VS-8</a><span data-zh="剧情插画，经模糊处理。">. </span><button id="import-scene" class="quiet-button" data-zh="选择背景图片">Choose local background</button> <button id="reset-scene" class="quiet-button" hidden data-zh="恢复 VS-8 背景">Restore VS-8 background</button><input hidden type="file" accept="image/jpeg,image/png,image/webp" id="scene-file"><span id="scene-status" role="status"></span></p>
   </details>
 </main>
 </body>

@@ -1,9 +1,15 @@
 import { excerptStart, excerptEnd, excerptParts, loadExcerpt } from './excerpt-audio.js';
+import { sectionText } from './data/full.zh.js';
 
 const $ = (id) => document.getElementById(id);
+const { text, error: errorText } = window.studyLanguage;
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const names = ['C', 'D♭', 'D', 'E♭', 'E', 'F', 'G♭', 'G', 'A♭', 'A', 'B♭', 'B'];
-const labels = ['Mix', 'Vocal', 'Accompaniment', 'Vocal + bass', 'G1 → E♭1', 'Hold G1', 'Bass', 'Drums', 'Instruments'];
+const labels = [
+  ['Mix', '混音'], ['Vocal', '人声'], ['Accompaniment', '伴奏'], ['Vocal + bass', '人声与贝斯'],
+  ['G1 → E♭1', 'G1 → E♭1'], ['Hold G1', '保持 G1'], ['Bass', '贝斯'], ['Drums', '鼓组'], ['Instruments', '器乐']
+];
+const excerptNames = { vocal: '人声', bass: '贝斯', drums: '鼓组', instruments: '器乐' };
 const isTrial = (i) => i === 4 || i === 5;
 const chartX = 106, chartWidth = 826;
 const cueStart = 9.65, cueEnd = 14.75;
@@ -17,6 +23,18 @@ let recordedRoles = new Set(), libraryRevision = 0;
 let previousFullRange;
 const audibleExcerptParts = new Set(excerptParts);
 const decoded = new Map(), decoding = new Map();
+const sectionViews = [];
+const statusMessages = new Map();
+
+function showStatus(id, message) {
+  if (message) statusMessages.set(id, message);
+  else statusMessages.delete(id);
+  $(id).textContent = message ? message() : '';
+}
+
+function sectionCopy(section) {
+  return window.studyLanguage.zh ? sectionText[section.short] : section;
+}
 
 function formatTime(time, decimal = true) {
   const cents = Math.round(Math.max(time, 0) * 100);
@@ -48,19 +66,19 @@ function drawChart() {
   chart.replaceChildren();
   const span = end - start, x = t => chartX + chartWidth * (t - start) / span;
   const add = (tag, attrs, content) => chart.appendChild(svg(tag, attrs, content));
-  const text = (px, py, content, cls = 'v-axis', attr = {}) => add('text', { x: px, y: py, class: cls, ...attr }, content);
+  const drawText = (px, py, content, cls = 'v-axis', attr = {}) => add('text', { x: px, y: py, class: cls, ...attr }, content);
   const line = (x1, y1, x2, y2, color, dashed = false) => add('line', { x1, y1, x2, y2, stroke: color, 'stroke-width': .8, 'stroke-dasharray': dashed ? '3 3' : 'none' });
   const lanes = [
-    [53, 109, '#302637', 'Vocal pitch', 'Main contour'],
-    [169, 48, '#302c32', 'Vocal RMS', 'dBFS'],
-    [224, 42, '#203136', 'Bass', isTrial(role) ? 'Test pitch' : 'Pitch estimate'],
-    [274, 86, '#2b283d', 'Instruments', 'Pitch class'],
-    [369, 34, '#302a32', 'Percussion', 'RMS · dBFS']
+    [53, 109, '#302637', text('Vocal pitch', '人声音高'), text('Main contour', '主旋律线')],
+    [169, 48, '#302c32', text('Vocal RMS', '人声电平'), 'dBFS'],
+    [224, 42, '#203136', text('Bass', '贝斯'), isTrial(role) ? text('Test pitch', '实验音高') : text('Pitch estimate', '估计音高')],
+    [274, 86, '#2b283d', text('Instruments', '器乐'), text('Pitch class', '音级')],
+    [369, 34, '#302a32', text('Percussion', '打击乐'), 'RMS · dBFS']
   ];
   for (const [y, h, fill, title, desc] of lanes) {
     add('rect', { x: chartX, y, width: chartWidth, height: h, fill });
-    text(11, y + 16, title, 'v-head');
-    text(11, y + 30, desc);
+    drawText(11, y + 16, title, 'v-head');
+    drawText(11, y + 30, desc);
   }
   const defs = add('defs', {});
   const clip = svg('clipPath', { id: 'chroma-window' });
@@ -73,7 +91,7 @@ function drawChart() {
   for (let t = Math.ceil((start - .00001) / grid) * grid; t < end - .01; t += grid) {
     const px = x(t);
     line(px, 47, px, 403, '#5a5564', true);
-    if (px < chartX + chartWidth - 22) text(px + 2, 44, span > 60 ? formatTime(t, false) : Number(t.toFixed(1)) + ' s');
+    if (px < chartX + chartWidth - 22) drawText(px + 2, 44, span > 60 ? formatTime(t, false) : Number(t.toFixed(1)) + text(' s', ' 秒'));
   }
   const voiceY = m => 158 - (clamp(m, 47, 85) - 47) * 96 / 38;
   const dbY = d => 213 - clamp((d + 60) / 53, 0, 1) * 40;
@@ -81,10 +99,10 @@ function drawChart() {
   const drumY = d => 400 - clamp((d + 60) / 54, 0, 1) * 27;
   for (const m of [60, 67, 72, 79]) {
     line(chartX, voiceY(m), chartX + chartWidth, voiceY(m), '#4b4053');
-    text(chartX - 4, voiceY(m) + 3, pitch(m), 'v-axis', { 'text-anchor': 'end' });
+    drawText(chartX - 4, voiceY(m) + 3, pitch(m), 'v-axis', { 'text-anchor': 'end' });
   }
-  for (const d of [-45, -20]) text(chartX - 4, dbY(d) + 3, d, 'v-axis', { 'text-anchor': 'end' });
-  for (const n of [0, 4, 7, 11]) text(chartX - 4, 277 + (11.5 - n) * 86 / 12, names[n], 'v-axis', { 'text-anchor': 'end' });
+  for (const d of [-45, -20]) drawText(chartX - 4, dbY(d) + 3, d, 'v-axis', { 'text-anchor': 'end' });
+  for (const n of [0, 4, 7, 11]) drawText(chartX - 4, 277 + (11.5 - n) * 86 / 12, names[n], 'v-axis', { 'text-anchor': 'end' });
 
   function plot(values, dt, project, stroke, width, jump = Infinity) {
     const first = Math.max(0, Math.floor(start / dt)), last = Math.min(values.length - 1, Math.ceil(end / dt));
@@ -108,22 +126,27 @@ function drawChart() {
     const left = x(Math.max(start, a)), right = x(Math.min(end, b));
     if (right <= left) continue;
     add('line', { x1: left, x2: right, y1: bassY(m), y2: bassY(m), stroke: '#a4dacf', 'stroke-width': 2.7 });
-    if (right - left > 28) text(left + 3, bassY(m) - 3, pitch(m), 'v-label');
+    if (right - left > 28) drawText(left + 3, bassY(m) - 3, pitch(m), 'v-label');
   }
   plot(h.drumDb, h.dt, drumY, '#d9a58e', 1.4);
   if (span < 36) {
-    const markers = [[10.1, 'Phrase onset ≈10.1 s', 13], [11.653, 'Bass change 11.65 s', 29], [80.47, 'Phrase return', 13], [82.02, 'Bass change', 29]];
+    const markers = [
+      [10.1, text('Phrase onset ≈10.1 s', '乐句起点 ≈10.1 秒'), 13],
+      [11.653, text('Bass change 11.65 s', '低音转换 11.65 秒'), 29],
+      [80.47, text('Phrase return', '乐句再现'), 13],
+      [82.02, text('Bass change', '低音转换'), 29]
+    ];
     for (const [t, caption, y] of markers) {
       if (t <= start || t >= end) continue;
       const px = x(t), nearEnd = px > chartX + chartWidth - 118;
       line(px, y + 4, px, 266, '#998769', true);
-      text(px + (nearEnd ? -3 : 3), y, caption, 'v-label', { 'text-anchor': nearEnd ? 'end' : 'start' });
+      drawText(px + (nearEnd ? -3 : 3), y, caption, 'v-label', { 'text-anchor': nearEnd ? 'end' : 'start' });
     }
   } else {
     data.sections.forEach((s, i) => {
       if (s.start <= start || s.start >= end) return;
       line(x(s.start), 20, x(s.start), 266, '#756f89', true);
-      text(x(s.start) + 2, 17, i + 1);
+      drawText(x(s.start) + 2, 17, i + 1);
     });
   }
   graphCursor = add('line', { x1: x(position), x2: x(position), y1: 45, y2: 404, stroke: '#fcf7ff', 'stroke-width': 1.6, 'pointer-events': 'none' });
@@ -176,18 +199,18 @@ function availablePart(preferred) {
 function paint() {
   const available = canPlay(role);
   const excerpt = source === 'excerpt';
-  $('v-play').textContent = active ? 'Ⅱ Pause' : pending ? 'Loading…' : '▶ Play';
-  $('v-play').setAttribute('aria-label', active ? 'Pause' : pending ? 'Cancel loading' : 'Play');
+  $('v-play').textContent = active ? text('Ⅱ Pause', 'Ⅱ 暂停') : pending ? text('Loading…', '载入中…') : text('▶ Play', '▶ 播放');
+  $('v-play').setAttribute('aria-label', active ? text('Pause', '暂停') : pending ? text('Cancel loading', '取消载入') : text('Play', '播放'));
   $('v-play').disabled = !available;
-  $('v-listening').textContent = available ? labels[active?.role ?? role] : '—';
+  $('v-listening').textContent = available ? text(...labels[active?.role ?? role]) : '—';
   if (excerpt) {
     const parts = [];
     document.querySelectorAll('[data-excerpt-part]').forEach(button => {
       const on = audibleExcerptParts.has(button.dataset.excerptPart);
       button.setAttribute('aria-pressed', String(on));
-      if (on) parts.push(button.dataset.excerptPart);
+      if (on) parts.push(text(button.dataset.excerptPart, excerptNames[button.dataset.excerptPart]));
     });
-    $('v-listening').textContent = parts.length === excerptParts.length ? 'Mix' : parts.join(' + ') || 'Muted';
+    $('v-listening').textContent = parts.length === excerptParts.length ? text(...labels[0]) : parts.join(' + ') || text('Muted', '静音');
   }
   document.querySelectorAll('[data-vmode]').forEach(button => {
     const index = Number(button.dataset.vmode);
@@ -255,7 +278,7 @@ async function play(index = role, matchPhrase = false) {
   const kind = source;
   role = index;
   pending = true;
-  $('v-status').textContent = '';
+  showStatus('v-status');
   paint();
   window.dispatchEvent(new Event('study:local-play'));
   try {
@@ -310,7 +333,7 @@ async function play(index = role, matchPhrase = false) {
   } catch (error) {
     if (id !== revision) return;
     pause();
-    $('v-status').textContent = error?.message || 'Press Play to reload the audio.';
+    showStatus('v-status', () => errorText(error, 'Press Play to reload the audio.', '点「播放」重新载入音频。'));
   }
 }
 
@@ -326,23 +349,31 @@ function setRange(a, b, key, run = false, loop = key !== 'whole', keepActive = f
   $('v-a').value = a.toFixed(2); $('v-b').value = b.toFixed(2);
   document.querySelectorAll('[data-seg]').forEach(n => n.setAttribute('aria-pressed', String(n.dataset.seg === key)));
   document.querySelectorAll('[data-natural]').forEach(n => n.setAttribute('aria-pressed', String('natural' + n.dataset.natural === key)));
-  const s = data.sections.find((_, i) => key === 's' + i);
-  const notes = {
-    phrase: 'The vocal changes its articulation near 10.1 s. The bass moves from G1 to E♭1 near 11.65 s.',
-    turn: 'The phrase onset precedes the bass change by about 1.55 seconds.',
-    return: 'The opening vocal returns about 70.37 seconds later, or 56 bars at the opening tempo.',
-    trial: 'The two bass versions share the same level envelope and upper line.',
-    natural0: 'First phrase. B♭4 over E♭1 gives a perfect fifth by pitch class.',
-    natural1: 'Return. B♭4 over E2 gives a tritone.'
-  };
-  $('v-section-note').textContent = s ? s.observation : notes[key] || '';
-  const special = { excerpt: 'Opening nine bars', trial: 'Controlled bass comparison', natural0: 'First vocal phrase', natural1: 'Vocal return', custom: 'Custom range' };
-  const preset = Array.from($('v-presets').querySelectorAll('[data-seg]')).find(button => button.dataset.seg === key);
-  const label = s?.name || preset?.textContent.trim() || special[key] || formatTime(a) + '–' + formatTime(b);
-  window.dispatchEvent(new CustomEvent('study:range-change', { detail: { start: a, end: b, label } }));
-  $('v-status').textContent = '';
+  describeRange();
+  showStatus('v-status');
   paint(); drawChart(); readout(true);
   if (run) play();
+}
+
+function describeRange() {
+  const section = data.sections.find((_, i) => selection === 's' + i);
+  const copy = section && sectionCopy(section);
+  const notes = {
+    phrase: ['The vocal changes its articulation near 10.1 s. The bass moves from G1 to E♭1 near 11.65 s.', '约 10.1 秒，人声的咬字有了变化。约 11.65 秒，贝斯从 G1 降至 E♭1。'],
+    turn: ['The phrase onset precedes the bass change by about 1.55 seconds.', '新乐句先响起，大约 1.55 秒后低音才转到 E♭1。'],
+    return: ['The opening vocal returns about 70.37 seconds later, or 56 bars at the opening tempo.', '开头的人声在约 70.37 秒后再现，按开头的速度算，正好相隔 56 小节。'],
+    trial: ['The two bass versions share the same level envelope and upper line.', '两段的上方旋律相同，贝斯的强弱变化也一致，只有低音的音高不同。'],
+    natural0: ['First phrase. B♭4 over E♭1 gives a perfect fifth by pitch class.', '首次出现时，人声 B♭4 位于低音 E♭1 上方。折合到一个八度内，两音相距纯五度。'],
+    natural1: ['Return. B♭4 over E2 gives a tritone.', '乐句再现时，人声仍是 B♭4，低音换成 E2。折合到一个八度内，两音构成三全音。']
+  };
+  $('v-section-note').textContent = copy?.observation || (notes[selection] ? text(...notes[selection]) : '');
+  const special = {
+    excerpt: ['Opening nine bars', '开头九小节'], trial: ['Controlled bass comparison', '低音对照'],
+    natural0: ['First vocal phrase', '首次吟唱'], natural1: ['Vocal return', '人声再现'], custom: ['Custom range', '自选片段']
+  };
+  const preset = Array.from($('v-presets').querySelectorAll('[data-seg]')).find(button => button.dataset.seg === selection);
+  const label = copy?.name || preset?.textContent.trim() || (special[selection] ? text(...special[selection]) : formatTime(start) + '–' + formatTime(end));
+  window.dispatchEvent(new CustomEvent('study:range-change', { detail: { start, end, label } }));
 }
 
 function seek(time) {
@@ -410,16 +441,20 @@ async function importStem(event) {
   loadingReference = true;
   $('import-stem').disabled = true;
   $('stem-role').disabled = true;
-  const status = $('ref-status');
-  status.textContent = 'Reading audio file…';
+  showStatus('ref-status', () => text('Reading audio file…', '正在读取音频…'));
   try {
     const result = await window.studyMedia.importStem(index, file);
     invalidateRecordings();
     await refreshReference();
     if (source === 'reference') changeSource('reference', index);
-    status.textContent = labels[index] + (result.persistent ? ' saved on this device.' : ' loaded for this tab.');
+    showStatus('ref-status', () => {
+      const [english, chinese] = labels[index];
+      return result.persistent
+        ? text(english + ' saved on this device.', chinese + '音轨已保存在本机。')
+        : text(english + ' loaded for this tab.', chinese + '音轨已载入当前标签页。');
+    });
   } catch (error) {
-    status.textContent = error.message || 'Choose a local file and try again.';
+    showStatus('ref-status', () => errorText(error, 'Choose a local file and try again.', '请重新选择本地音频文件。'));
   } finally {
     loadingReference = false;
     $('import-stem').disabled = false;
@@ -473,22 +508,20 @@ async function init() {
     const key = 's' + i;
     const button = document.createElement('button');
     button.dataset.seg = key;
-    button.textContent = s.short;
-    button.title = s.name + ' · ' + formatTime(s.start) + '–' + formatTime(s.end);
     button.style.flex = String(Math.max(7, s.end - s.start));
     button.onclick = () => setRange(s.start, s.end, key, Boolean(active || pending));
     $('v-map').appendChild(button);
     const entry = document.createElement('article');
     entry.className = 'v-entry';
     const playButton = document.createElement('button');
-    playButton.textContent = '▶ ' + s.name;
     playButton.onclick = () => setRange(s.start, s.end, key, true);
     const time = document.createElement('small');
     time.textContent = formatTime(s.start) + '–' + formatTime(s.end);
-    const text = document.createElement('p');
-    text.textContent = s.observation;
-    entry.append(playButton, time, text); $('v-index').appendChild(entry);
+    const observation = document.createElement('p');
+    entry.append(playButton, time, observation); $('v-index').appendChild(entry);
+    sectionViews.push({ section: s, button, playButton, observation });
   });
+  translateSections();
   $('v-play').onclick = () => active || pending ? pause() : play();
   $('v-loop').onchange = () => { if (active || pending) play(); };
   const slider = $('v-slider');
@@ -511,7 +544,7 @@ async function init() {
   $('v-apply').onclick = () => {
     const a = $('v-a').valueAsNumber, b = $('v-b').valueAsNumber;
     if (!Number.isFinite(a) || !Number.isFinite(b) || a < 0 || b > data.duration + .005 || b - a < .1) {
-      $('v-status').textContent = 'Choose a range of at least 0.10 s within the track.';
+      showStatus('v-status', () => text('Choose a range of at least 0.10 s within the track.', '请在曲目范围内选择至少 0.10 秒的片段。'));
       return;
     }
     setRange(a, Math.min(b, data.duration), 'custom', Boolean(active || pending));
@@ -529,11 +562,11 @@ async function init() {
     play(role, aligned);
   });
   $('source-choice').onchange = event => {
-    if (!loadingReference) $('ref-status').textContent = '';
+    if (!loadingReference) showStatus('ref-status');
     changeSource(event.target.value === 'reference' ? 'excerpt' : 'guide');
   };
   $('recording-range').onchange = event => {
-    if (!loadingReference) $('ref-status').textContent = '';
+    if (!loadingReference) showStatus('ref-status');
     changeSource(event.target.value === 'excerpt' ? 'excerpt' : 'reference');
   };
   for (const button of document.querySelectorAll('[data-excerpt-part]')) {
@@ -555,7 +588,7 @@ async function init() {
   const refreshOnReturn = () => {
     if (loadingReference) return;
     invalidateRecordings();
-    refreshReference().catch(error => { $('ref-status').textContent = error.message; });
+    refreshReference().catch(reportLibraryError);
   };
   window.addEventListener('study:official-play', pause);
   window.addEventListener('pagehide', pause);
@@ -563,7 +596,31 @@ async function init() {
   window.addEventListener('focus', refreshOnReturn);
   setRange(0, data.duration, 'whole', false, false);
   if ($('source-choice').value === 'reference') changeSource('excerpt');
-  await refreshReference().catch(error => { $('ref-status').textContent = error.message; });
+  await refreshReference().catch(reportLibraryError);
 }
 
-init().catch(error => { $('v-status').textContent = error.message; });
+function reportLibraryError(error) {
+  showStatus('ref-status', () => errorText(error, 'Reopen the page to read your saved audio.', '请重新打开页面，载入已保存的音频。'));
+}
+
+function translateSections() {
+  for (const { section, button, playButton, observation } of sectionViews) {
+    const copy = sectionCopy(section);
+    button.textContent = copy.short;
+    button.title = copy.name + ' · ' + formatTime(section.start) + '–' + formatTime(section.end);
+    playButton.textContent = '▶ ' + copy.name;
+    observation.textContent = copy.observation;
+  }
+}
+
+window.addEventListener('study-language-change', () => {
+  for (const [id, message] of statusMessages) $(id).textContent = message();
+  if (!end) return;
+  translateSections();
+  describeRange();
+  paint(); drawChart(); readout(true);
+});
+
+init().catch(error => {
+  showStatus('v-status', () => errorText(error, 'The score data could not be loaded. Reload the page to retry.', '请刷新页面，重新载入乐谱数据。'));
+});

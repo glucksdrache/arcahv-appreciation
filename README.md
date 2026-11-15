@@ -2,6 +2,8 @@
 
 *Feryquitous · Arcaea*
 
+English / [中文](README.zh-CN.md)
+
 There is something in *Arcahv* that words can hardly capture: a harmonious contradiction of catastrophe and creation, hope and despair, tenderness and cruelty.
 
 It begins with a sacred chant, distant and solemn. Then almost seamlessly, an eerie warmth emerges. It feels as though an angel is singing a lullaby for the world and the people in it, at the very moment she begins to destroy it. And perhaps the most unsettling thought is that she genuinely loves what she is destroying.
