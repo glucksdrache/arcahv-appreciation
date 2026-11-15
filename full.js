@@ -11,6 +11,7 @@ let data, start = 0, end = 0, position = 0, role = 0, selection = 'whole';
 let context, active, pending = false, revision = 0, source = 'guide', referenceGeneration = 0;
 let animationFrame, graphCursor, lastFrame = -1, loadingReference = false;
 let dragging = false, previewTime = null, heatImage;
+let recordedRoles = new Set(), libraryRevision = 0;
 const decoded = new Map(), decoding = new Map();
 
 function formatTime(time, decimal = true) {
@@ -155,11 +156,27 @@ function animate() {
   if (active) animationFrame = requestAnimationFrame(animate);
 }
 
+function canPlay(index) {
+  return source === 'guide' || recordedRoles.has(index);
+}
+
+function availablePart(preferred) {
+  if (canPlay(preferred)) return preferred;
+  return [...recordedRoles].find(index => !isTrial(index)) ?? 0;
+}
+
 function paint() {
+  const available = canPlay(role);
   $('v-play').textContent = active ? 'Ⅱ Pause' : pending ? 'Loading…' : '▶ Play';
   $('v-play').setAttribute('aria-label', active ? 'Pause' : pending ? 'Cancel loading' : 'Play');
-  $('v-listening').textContent = labels[active?.role ?? role];
-  document.querySelectorAll('[data-vmode]').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.vmode === role)));
+  $('v-play').disabled = !available;
+  $('v-listening').textContent = available ? labels[active?.role ?? role] : '—';
+  document.querySelectorAll('[data-vmode]').forEach(button => {
+    const index = Number(button.dataset.vmode);
+    button.disabled = !canPlay(index);
+    button.setAttribute('aria-pressed', String(!button.disabled && index === role));
+  });
+  document.querySelectorAll('[data-natural], #v-index button').forEach(button => { button.disabled = !available; });
 }
 
 function dispose(fadeAt) {
@@ -210,6 +227,7 @@ async function bufferFor(index, kind) {
 }
 
 async function play(index = role, matchPhrase = false) {
+  if (!canPlay(index)) return;
   const id = ++revision;
   const kind = source;
   role = index;
@@ -263,7 +281,7 @@ function setRange(a, b, key, run = false, loop = key !== 'whole', keepActive = f
   if (keepActive) { revision++; pending = false; }
   else pause();
   start = a; end = b; position = a; selection = key;
-  if (isTrial(role) && key !== 'trial') role = 0;
+  if (isTrial(role) && key !== 'trial') role = availablePart(0);
   $('v-loop').checked = loop;
   $('v-slider').min = a; $('v-slider').max = b;
   $('v-a').value = a.toFixed(2); $('v-b').value = b.toFixed(2);
@@ -294,19 +312,61 @@ function seek(time) {
   if (resume) play();
 }
 
-async function refreshReference() {
-  const option = $('source-choice').querySelector('[value=reference]');
-  let available = false;
-  try { available = await window.studyMedia.hasReference(); } catch {}
-  option.disabled = !available;
-  if (!available && source === 'reference') changeSource('guide');
-  if (!loadingReference) $('ref-status').textContent = available ? 'Reference available on this device.' : '';
+function invalidateRecordings() {
+  referenceGeneration++;
+  for (const key of decoded.keys()) if (key.startsWith('reference:')) decoded.delete(key);
 }
 
-function changeSource(kind) {
+async function refreshReference() {
+  const request = ++libraryRevision;
+  const indices = await window.studyMedia.recordedRoles();
+  if (request !== libraryRevision) return;
+  recordedRoles = new Set(indices);
+  if (!canPlay(role)) changeSource(source);
+  else paint();
+}
+
+function changeSource(kind, preferred = role) {
+  const resume = Boolean(active || pending);
   source = kind;
   $('source-choice').value = kind;
-  if (active || pending) play();
+  $('stem-controls').hidden = kind !== 'reference';
+  role = availablePart(preferred);
+  if (!canPlay(role)) pause();
+  if (selection === 'trial' && !isTrial(role)) {
+    const time = currentTime();
+    setRange(cueStart, cueEnd, 'turn', false, $('v-loop').checked);
+    position = time;
+  }
+  paint(); drawChart(); readout(true);
+  if (resume && canPlay(role)) play();
+}
+
+async function importLocal(input, index) {
+  const file = input.files[0];
+  if (!file || loadingReference) return;
+  const initialSource = source;
+  const individual = index !== undefined;
+  loadingReference = true;
+  for (const id of ['import-ref', 'import-stem', 'stem-role']) $(id).disabled = true;
+  const status = $('ref-status');
+  status.textContent = individual ? 'Reading audio file…' : 'Reading local reference…';
+  try {
+    const result = individual
+      ? await window.studyMedia.importStem(index, file)
+      : await window.studyMedia.importPage(file);
+    invalidateRecordings();
+    await refreshReference();
+    if (source === initialSource) changeSource('reference', individual ? index : role);
+    const name = individual ? labels[index] : 'Reference';
+    status.textContent = name + (result.persistent ? ' saved on this device.' : ' loaded for this tab.');
+  } catch (error) {
+    status.textContent = error.message || 'The local file could not be read.';
+  } finally {
+    loadingReference = false;
+    for (const id of ['import-ref', 'import-stem', 'stem-role']) $(id).disabled = false;
+    input.value = '';
+  }
 }
 
 function chooseRole(index) {
@@ -405,37 +465,27 @@ async function init() {
     const aligned = comparing && !!active;
     setRange(a, a + 1.86, 'natural' + which, false, true, aligned);
     position = a + clamp(offset, 0, 1.858);
-    if (!comparing) role = 3;
+    if (!comparing) role = canPlay(3) ? 3 : role;
     play(role, aligned);
   });
-  $('source-choice').onchange = event => changeSource(event.target.value);
+  $('source-choice').onchange = event => {
+    if (!loadingReference) $('ref-status').textContent = '';
+    changeSource(event.target.value);
+  };
   $('import-ref').onclick = () => $('ref-file').click();
-  $('ref-file').onchange = async event => {
-    const file = event.target.files[0];
-    if (!file) return;
-    loadingReference = true;
-    $('import-ref').disabled = true;
-    $('ref-status').textContent = 'Reading local reference…';
-    try {
-      const result = await window.studyMedia.importPage(file);
-      referenceGeneration++;
-      for (const key of decoded.keys()) if (key.startsWith('reference:')) decoded.delete(key);
-      await refreshReference();
-      changeSource('reference');
-      $('ref-status').textContent = result.persistent ? 'Reference saved on this device.' : 'Reference available in this tab.';
-    } catch (error) {
-      $('ref-status').textContent = error.message || 'Reference could not be read.';
-    } finally {
-      loadingReference = false;
-      $('import-ref').disabled = false;
-      event.target.value = '';
-    }
+  $('ref-file').onchange = event => importLocal(event.target, undefined);
+  $('import-stem').onclick = () => $('stem-file').click();
+  $('stem-file').onchange = event => importLocal(event.target, Number($('stem-role').value));
+  const refreshOnReturn = () => {
+    if (loadingReference) return;
+    invalidateRecordings();
+    refreshReference().catch(error => { $('ref-status').textContent = error.message; });
   };
   window.addEventListener('study:official-play', pause);
   window.addEventListener('pagehide', pause);
-  window.addEventListener('pageshow', refreshReference);
-  window.addEventListener('focus', refreshReference);
-  await refreshReference();
+  window.addEventListener('pageshow', refreshOnReturn);
+  window.addEventListener('focus', refreshOnReturn);
+  await refreshReference().catch(error => { $('ref-status').textContent = error.message; });
   setRange(0, data.duration, 'whole', false, false);
 }
 

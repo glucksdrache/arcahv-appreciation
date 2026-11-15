@@ -7,12 +7,12 @@
   <meta name="description" content="A time-aligned listening study of Arcahv by Feryquitous, with vocal pitch, bass, instrumental chroma and two A/B comparisons.">
   <title>Arcahv · Listening study</title>
   <link rel="icon" href="data:,">
-  <link rel="stylesheet" href="style.css?v=vs8">
+  <link rel="stylesheet" href="style.css?v=local-stems">
   <link rel="stylesheet" href="controls.css">
-  <script src="media-source.js" defer></script>
+  <script src="media-source.js?v=local-stems" defer></script>
   <script src="appearance.js?v=vs8" defer></script>
   <script src="official-player.js" defer></script>
-  <script src="full.js" type="module"></script>
+  <script src="full.js?v=local-stems" type="module"></script>
 </head>
 <body>
 <main class="shell">
@@ -45,8 +45,15 @@
     <div class="button-row roles" id="v-modes" aria-label="Audible parts">
       <span class="group-label">Parts</span><button data-vmode="0">Mix</button><button data-vmode="1">Vocal</button><button data-vmode="2">Accompaniment</button><button data-vmode="3">Vocal + bass</button><button data-vmode="6">Bass</button><button data-vmode="7">Drums</button><button data-vmode="8">Instruments</button>
     </div>
-    <div class="source-row"><label for="source-choice">Audio source</label><select id="source-choice"><option value="guide">Synthesized reduction</option><option value="reference" disabled>Recorded stems</option></select>
+    <div class="source-row"><label for="source-choice">Audio source</label><select id="source-choice" aria-controls="stem-controls"><option value="guide">Synthesized reduction</option><option value="reference">Recorded stems</option></select>
       <button id="import-ref" class="quiet-button">Load reference HTML</button><input id="ref-file" type="file" accept=".html,.htm,text/html" hidden><span id="ref-status" role="status"></span>
+    </div>
+    <div id="stem-controls" class="source-row stem-controls" hidden>
+      <label for="stem-role">Part to load</label>
+      <select id="stem-role"><option value="1">Vocal</option><option value="6">Bass</option><option value="7">Drums</option><option value="8">Instruments</option><option value="2">Accompaniment</option><option value="3">Vocal + bass</option><option value="0">Mix</option></select>
+      <button type="button" id="import-stem" aria-describedby="stem-hint">Load audio file</button>
+      <input id="stem-file" type="file" accept="audio/*,.wav,.flac,.ogg,.opus,.m4a,.mp3,.aac,.aif,.aiff" hidden>
+      <small id="stem-hint">Choose one stem aligned from 0:00 to 2:52.99. The audio stays in this browser.</small>
     </div>
     <p id="v-status" role="alert"></p>
     <div class="chart-scroll"><svg id="v-chart" viewBox="0 0 960 418" role="img" aria-label="Time-aligned vocal pitch, vocal level, bass, instrumental chroma and percussion level"></svg></div>
@@ -72,7 +79,7 @@
   <details class="panel methods"><summary>Measurements and sources</summary>
     <p>The horizontal axis follows the source file, including its opening silence. The vocal contour is sampled every 40 ms. Gaps mark frames without a sufficiently clear periodic pitch. Vocal and percussion levels are short-time RMS in dBFS.</p>
     <p>The bass estimate follows the lower harmonics. Instrumental chroma folds spectral peaks into twelve pitch classes. Overtones and separation bleed can contribute to a peak. The sustained D, F, A and C above E♭ around 13.2–13.8 s support a local Dm7/E♭ reading.</p>
-    <p>The public reduction renders the measured contours and chroma with synthesized tones. The original video is linked at source. Loading the earlier full-track analysis HTML enables its recorded stems and vocal A/B examples on this device.</p>
+    <p>The public reduction renders the measured contours and chroma with synthesized tones. The original video is linked at source. Recorded stems can be loaded one part at a time. The earlier full-track analysis HTML includes all parts and the controlled bass comparison.</p>
     <p>The background uses a blurred version of lowiro’s artwork for <em>Arcaea</em>, <a href="https://arcaea.fandom.com/wiki/Story/Black_Fate#Entry_VS-8">Black Fate, entry VS-8</a>. <button id="import-scene" class="quiet-button">Choose local background</button> <button id="reset-scene" class="quiet-button" hidden>Restore VS-8 background</button><input hidden type="file" accept="image/jpeg,image/png,image/webp" id="scene-file"><span id="scene-status" role="status"></span></p>
   </details>
 </main>

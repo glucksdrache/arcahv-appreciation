@@ -11,6 +11,7 @@
     'trial_hold', 'bass', 'drums', 'instrument'
   ];
   const duration = 7628800 / 44100;
+  const stemIndices = [0, 1, 2, 3, 6, 7, 8];
   const storeName = 'assets';
   const memory = new Map();
   let connection;
@@ -199,6 +200,43 @@
     return write(entries);
   }
 
+  async function importStem(index, file) {
+    if (!stemIndices.includes(index)) throw new Error('Choose a full-length listening part.');
+    if (!(file instanceof Blob) || !file.size || file.size > 128 * 1024 * 1024) {
+      throw new Error('Choose a nonempty audio file up to 128 MiB.');
+    }
+    const bytes = await file.arrayBuffer();
+    // Keep an independent copy before the decoder takes ownership of the buffer.
+    const blob = new Blob([bytes], {type: file.type});
+    let seconds;
+    try {
+      const decoder = new OfflineAudioContext(1, 1, 44100);
+      seconds = (await decoder.decodeAudioData(bytes)).duration;
+    } catch {
+      throw new Error('This browser could not decode the selected audio file.');
+    }
+    // Allow a few extra codec frames at the ends of compressed files.
+    if (Math.abs(seconds - duration) > 0.1) {
+      throw new Error('This file is ' + seconds.toFixed(2) + ' s long. Choose a 172.99 s stem aligned to the start of Arcahv.');
+    }
+    return write([['full/' + index, blob]]);
+  }
+
+  async function recordedRoles() {
+    const db = await openDatabase();
+    const keys = new Set(db ? await new Promise((resolve, reject) => {
+      const store = db.transaction(storeName).objectStore(storeName);
+      const request = store.getAllKeys(IDBKeyRange.bound('full/', 'full/\uffff'));
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    }) : []);
+    for (const [key, value] of memory) {
+      if (value === null) keys.delete(key);
+      else keys.add(key);
+    }
+    return originalNames.map((_, i) => i).filter(i => keys.has('full/' + i));
+  }
+
   async function removeReference() {
     const keys = ['reference', ...originalNames.map((_, i) => 'full/' + i), 'intro/0', 'intro/1', 'intro/2'];
     return write(keys.map(key => [key, null]));
@@ -211,7 +249,9 @@
     }
     if (scope === 'full' ? options.reference === true : index < 3) {
       const blob = await read(scope + '/' + index);
-      if (!(blob instanceof Blob)) throw new Error('Import your local study HTML to hear this reference track.');
+      if (!(blob instanceof Blob)) throw new Error(scope === 'full'
+        ? 'Load a local recording for this part.'
+        : 'Import your local study HTML to hear this reference track.');
       return blob.arrayBuffer();
     }
     const asset = scope === 'full' ? 'media/guides/' + publicFull[index] : 'media/intro/' + index + '.flac';
@@ -277,6 +317,8 @@
   window.studyMedia = Object.freeze({
     audio,
     importPage,
+    importStem,
+    recordedRoles,
     removeReference,
     hasReference: async () => (await read('reference')) === 1,
     setScene,

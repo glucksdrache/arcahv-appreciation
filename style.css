@@ -369,6 +369,18 @@ select {
   padding-top: 0;
   gap: 8px;
 }
+.stem-controls {
+  margin: 0 20px 10px;
+  padding: 8px 12px;
+  border-inline-start: 2px solid var(--line);
+  background: rgba(123, 144, 204, .08);
+}
+#stem-hint {
+  font-size: 12px;
+}
+.shell :is(.score-panel, .comparisons, .v-entry) button:disabled {
+  cursor: default;
+}
 .quiet-button {
   padding: 3px 7px;
   font-size: 12px;
@@ -577,6 +589,9 @@ input[type="range"] {
   }
   .source-row {
     align-items: center;
+  }
+  .stem-controls {
+    margin-inline: 12px;
   }
 }
 @media (prefers-reduced-motion: reduce) {
