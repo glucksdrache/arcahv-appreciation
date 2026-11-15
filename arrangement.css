@@ -270,18 +270,3 @@
   }
 
 }
-
-.arr-reference {
-  display:flex;
-  gap:.7rem;
-  align-items:center;
-  flex-wrap:wrap;
-  padding:.65rem clamp(.9rem,2.5vw,1.6rem) 0;
-  color:var(--muted,#b7b6c9);
-  font-size:.82rem;
-}
-
-.arr-reference button {
-  font-size:.82rem;
-}
-

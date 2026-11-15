@@ -402,29 +402,28 @@ function changeSource(kind, preferred) {
   if (resume && canPlay(role)) play();
 }
 
-async function importLocal(input, index) {
+async function importStem(event) {
+  const input = event.currentTarget;
   const file = input.files[0];
   if (!file || loadingReference) return;
-  const initialSource = source;
-  const individual = index !== undefined;
+  const index = Number($('stem-role').value);
   loadingReference = true;
-  for (const id of ['import-ref', 'import-stem', 'stem-role']) $(id).disabled = true;
+  $('import-stem').disabled = true;
+  $('stem-role').disabled = true;
   const status = $('ref-status');
-  status.textContent = individual ? 'Reading audio file…' : 'Reading local reference…';
+  status.textContent = 'Reading audio file…';
   try {
-    const result = individual
-      ? await window.studyMedia.importStem(index, file)
-      : await window.studyMedia.importPage(file);
+    const result = await window.studyMedia.importStem(index, file);
     invalidateRecordings();
     await refreshReference();
-    if (source === initialSource) changeSource('reference', individual ? index : role);
-    const name = individual ? labels[index] : 'Reference';
-    status.textContent = name + (result.persistent ? ' saved on this device.' : ' loaded for this tab.');
+    if (source === 'reference') changeSource('reference', index);
+    status.textContent = labels[index] + (result.persistent ? ' saved on this device.' : ' loaded for this tab.');
   } catch (error) {
     status.textContent = error.message || 'Choose a local file and try again.';
   } finally {
     loadingReference = false;
-    for (const id of ['import-ref', 'import-stem', 'stem-role']) $(id).disabled = false;
+    $('import-stem').disabled = false;
+    $('stem-role').disabled = false;
     input.value = '';
   }
 }
@@ -551,10 +550,8 @@ async function init() {
   for (const cue of document.querySelectorAll('[data-excerpt-cue]')) {
     cue.onclick = () => seek(Number(cue.dataset.excerptCue));
   }
-  $('import-ref').onclick = () => $('ref-file').click();
-  $('ref-file').onchange = event => importLocal(event.target, undefined);
   $('import-stem').onclick = () => $('stem-file').click();
-  $('stem-file').onchange = event => importLocal(event.target, Number($('stem-role').value));
+  $('stem-file').onchange = importStem;
   const refreshOnReturn = () => {
     if (loadingReference) return;
     invalidateRecordings();

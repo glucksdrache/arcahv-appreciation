@@ -11,7 +11,6 @@ let data;
 let context;
 let selectedBar = 0;
 let mode = 1;
-let referenceAvailable = false;
 let role = -1;
 let cursor = 0;
 let draggingSeek = false;
@@ -162,9 +161,9 @@ function setPressed(container, attribute, value) {
   }
 }
 
-function timeNow() {
+function timeNow(at = context?.currentTime) {
   if (!playback) return cursor;
-  const time = playback.from + Math.max(0, context.currentTime - playback.when);
+  const time = playback.from + Math.max(0, at - playback.when);
   const [start, end] = bounds();
   return playback.loop ? start + (time - start) % (end - start) : Math.min(end, time);
 }
@@ -205,17 +204,24 @@ function audioBuffer(index) {
   return audioFiles.get(index);
 }
 
+function stopTracks(tracks, when) {
+  for (const { source, gain } of tracks) {
+    const disconnect = () => {
+      source.disconnect();
+      gain.disconnect();
+    };
+    source.onended = when === undefined ? null : disconnect;
+    try { source.stop(when); } catch {}
+    if (when === undefined) disconnect();
+  }
+}
+
 function stopPlayback() {
   cursor = timeNow();
   revision++;
   pending = false;
   if (playback) {
-    for (const { source, gain } of playback.tracks) {
-      source.onended = null;
-      try { source.stop(); } catch {}
-      source.disconnect();
-      gain.disconnect();
-    }
+    stopTracks(playback.tracks);
     playback = undefined;
   }
   updateTransport();
@@ -236,17 +242,17 @@ function stopExample() {
 function adjustGains(immediate = false) {
   if (!playback) return;
   playback.tracks.forEach(({ gain, index }) => {
-    const enabled = Math.floor(index / 3) === mode && (role < 0 || index % 3 === role);
+    const enabled = role < 0 || index === role;
     const level = enabled ? .85 : 0;
     if (immediate) gain.gain.value = level;
     else gain.gain.setTargetAtTime(level, context.currentTime, .008);
   });
 }
 
-function animate(id) {
-  if (!playback || id !== revision) return;
+function animate(playing) {
+  if (playing !== playback) return;
   updateReadout();
-  requestAnimationFrame(() => animate(id));
+  requestAnimationFrame(() => animate(playing));
 }
 
 async function startPlayback() {
@@ -257,14 +263,16 @@ async function startPlayback() {
   updateTransport();
   try {
     await audioContext();
-    const indices = referenceAvailable ? [0, 1, 2, 3, 4, 5] : [3, 4, 5];
+    if (id !== revision) return;
+    const indices = mode === 0 ? [0, 1, 2] : [3, 4, 5];
     const buffers = await Promise.all(indices.map(audioBuffer));
     if (id !== revision) return;
     const [start, end] = bounds();
-    if (cursor < start || cursor >= end - .001) cursor = start;
     const loop = $('loop').checked;
     const when = context.currentTime + .025;
-    const tracks = buffers.map((buffer, position) => {
+    cursor = timeNow(when);
+    if (cursor < start || cursor >= end - .001) cursor = start;
+    const tracks = buffers.map((buffer, index) => {
       const source = context.createBufferSource();
       const gain = context.createGain();
       source.buffer = buffer;
@@ -273,13 +281,15 @@ async function startPlayback() {
       source.loopEnd = end;
       source.connect(gain);
       gain.connect(context.destination);
-      return { source, gain, index: indices[position] };
+      return { source, gain, index };
     });
-    playback = { tracks, when, from: cursor, loop };
+    if (playback) stopTracks(playback.tracks, when);
+    const playing = { tracks, when, from: cursor, loop };
+    playback = playing;
     pending = false;
     adjustGains(true);
     if (!loop) tracks[0].source.onended = () => {
-      if (revision !== id) return;
+      if (playback !== playing) return;
       stopPlayback();
       cursor = end;
       updateReadout();
@@ -289,7 +299,7 @@ async function startPlayback() {
       if (!loop) source.stop(when + end - cursor);
     }
     updateTransport();
-    animate(id);
+    animate(playing);
   } catch {
     if (id !== revision) return;
     stopPlayback();
@@ -359,65 +369,13 @@ for (let bar = 1; bar <= 9; bar++) {
 for (const button of $('bars').querySelectorAll('button')) {
   button.onclick = () => selectBar(Number(button.dataset.bar));
 }
-function chooseMode(next) {
-  if (next === 0 && !referenceAvailable) {
-    $('reference-file').click();
-    return;
-  }
-  mode = next;
-  setPressed($('modes'), 'mode', mode);
-  if (playback && !playback.tracks.some((track) => Math.floor(track.index / 3) === mode)) {
-    stopPlayback();
-    startPlayback();
-  } else {
-    adjustGains();
-  }
-}
-
-async function refreshReference() {
-  const available = await window.studyMedia.hasReference().catch(() => false);
-  const removed = referenceAvailable && !available;
-  referenceAvailable = available;
-  if (removed) {
-    const resumeReduction = mode === 1 && (playback || pending);
-    stopPlayback();
-    for (const index of [0, 1, 2]) audioFiles.delete(index);
-    chooseMode(1);
-    if (resumeReduction) startPlayback();
-  }
-  $('reference-status').textContent = referenceAvailable
-    ? 'Reference audio is available in this browser.'
-    : 'The recorded stems are loaded from your local analysis HTML.';
-}
-
-$('load-reference').onclick = () => $('reference-file').click();
-$('reference-file').onchange = async (event) => {
-  const file = event.target.files[0];
-  if (!file) return;
-  $('load-reference').disabled = true;
-  $('reference-status').textContent = 'Reading reference audio…';
-  try {
-    await window.studyMedia.importPage(file);
-    await refreshReference();
-    if (!referenceAvailable) throw new Error('The recording is unavailable.');
-    const resume = Boolean(playback || pending);
-    stopPlayback();
-    for (const index of [0, 1, 2]) audioFiles.delete(index);
-    chooseMode(0);
-    $('error').textContent = '';
-    if (resume) startPlayback();
-  } catch {
-    $('reference-status').textContent = 'Choose the original offline Arcahv analysis HTML with embedded audio.';
-  } finally {
-    $('load-reference').disabled = false;
-    event.target.value = '';
-  }
-};
-window.addEventListener('pageshow', refreshReference);
-window.addEventListener('focus', refreshReference);
 for (const button of $('modes').querySelectorAll('button')) {
   button.onclick = () => {
-    chooseMode(Number(button.dataset.mode));
+    const next = Number(button.dataset.mode);
+    if (next === mode) return;
+    mode = next;
+    setPressed($('modes'), 'mode', mode);
+    if (playback || pending) startPlayback();
   };
 }
 for (const button of $('roles').querySelectorAll('button')) {
@@ -453,7 +411,6 @@ try {
   const response = await fetch('data/intro.json');
   if (!response.ok) throw new Error();
   data = await response.json();
-  await refreshReference();
   $('method').textContent = data.method;
   selectBar(0);
 } catch {

@@ -9,10 +9,10 @@
   <link rel="icon" href="data:,">
   <link rel="stylesheet" href="style.css?v=opening-excerpt">
   <link rel="stylesheet" href="controls.css">
-  <script src="media-source.js?v=opening-excerpt" defer></script>
+  <script src="media-source.js?v=audio-import" defer></script>
   <script src="appearance.js?v=vs8" defer></script>
   <script src="official-player.js" defer></script>
-  <script src="full.js?v=opening-excerpt" type="module"></script>
+  <script src="full.js?v=audio-import" type="module"></script>
 </head>
 <body>
 <main class="shell">
@@ -92,8 +92,6 @@
           <input id="stem-file" type="file" accept="audio/*,.wav,.flac,.ogg,.opus,.m4a,.mp3,.aac,.aif,.aiff" hidden>
         </div>
         <p id="stem-hint">One stem per file · 0:00–2:52.99 · Local playback</p>
-        <button id="import-ref" type="button" class="quiet-button">Import all parts from study HTML</button>
-        <input id="ref-file" type="file" accept=".html,.htm,text/html" hidden>
       </div>
       <p id="ref-status" role="status"></p>
     </div>

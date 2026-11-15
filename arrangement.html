@@ -9,9 +9,9 @@
   <link rel="stylesheet" href="arrangement.css">
   <link rel="stylesheet" href="controls.css">
   <link rel="icon" href="data:,">
-  <script src="media-source.js"></script>
+  <script src="media-source.js?v=public-arrangement"></script>
   <script src="appearance.js?v=vs8" defer></script>
-  <script type="module" src="arrangement.js"></script>
+  <script type="module" src="arrangement.js?v=public-arrangement"></script>
 </head>
 <body class="arrangement-page">
   <main class="shell">
@@ -43,11 +43,6 @@
           <button type="button" data-mode="1" aria-pressed="true">Reduction</button>
           <button type="button" data-mode="0" aria-pressed="false">Recording</button>
         </div>
-      </div>
-      <div class="arr-reference" id="reference-controls">
-        <button type="button" id="load-reference">Load reference HTML</button>
-        <input id="reference-file" type="file" accept=".html,.htm,text/html" hidden>
-        <span id="reference-status" role="status">The recorded stems are loaded from your local analysis HTML.</span>
       </div>
       <div class="button-row arr-roles" id="roles" role="group" aria-label="Audible parts">
         <span class="arr-label">Parts</span>

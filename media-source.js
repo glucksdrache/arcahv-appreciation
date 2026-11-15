@@ -6,9 +6,9 @@
     'full-mix.ogg', 'voice.ogg', 'backing.ogg', 'voice-bass.ogg', 'trial-change.flac',
     'trial-hold.flac', 'bass.ogg', 'drums.ogg', 'instruments.ogg'
   ];
-  const originalNames = [
-    'original', 'vocal', 'accompaniment', 'vocal_bass', 'trial_change',
-    'trial_hold', 'bass', 'drums', 'instrument'
+  const publicIntro = [
+    'excerpt/drums.flac', 'excerpt/bass.flac', 'excerpt/instruments.flac',
+    'intro/3.flac', 'intro/4.flac', 'intro/5.flac', 'intro/6.flac'
   ];
   const duration = 7628800 / 44100;
   const stemIndices = [0, 1, 2, 3, 6, 7, 8];
@@ -58,7 +58,7 @@
     });
   }
 
-  async function write(entries) {
+  async function write(key, value) {
     const db = await openDatabase();
     if (db) {
       try {
@@ -67,137 +67,25 @@
           tx.oncomplete = () => resolve();
           tx.onabort = () => reject(tx.error || new Error('Local storage transaction aborted.'));
           const store = tx.objectStore(storeName);
-          try {
-            for (const [key, value] of entries) {
-              if (value === null) store.delete(key);
-              else store.put(value, key);
-            }
-          } catch (error) {
-            tx.abort();
-            reject(error);
-          }
+          if (value === null) store.delete(key);
+          else store.put(value, key);
         });
-        for (const [key] of entries) memory.delete(key);
+        memory.delete(key);
         return {persistent: true};
       } catch (error) {
         // A failed transaction leaves the previous persistent import intact.
         const transient = ['QuotaExceededError', 'SecurityError', 'UnknownError'];
-        if (!transient.includes(error.name) || entries.some(([, value]) => value === null)) throw error;
+        if (!transient.includes(error.name) || value === null) throw error;
       }
     }
-    for (const [key, value] of entries) memory.set(key, value);
+    memory.set(key, value);
     return {persistent: false};
-  }
-
-  function jsonBlock(html, id) {
-    // Read text between this known pair of tags. Never create a DOM from the imported page.
-    const tags = /<script\b([^>]{0,1024})>/gi;
-    const idAttr = new RegExp('(?:^|\\s)id\\s*=\\s*(["\x27])' + id + '\\1(?:\\s|$)', 'i');
-    const typeAttr = /(?:^|\s)type\s*=\s*(["'])application\/json\1(?:\s|$)/i;
-    for (let tag; (tag = tags.exec(html));) {
-      if (!idAttr.test(tag[1]) || !typeAttr.test(tag[1])) continue;
-      const stop = html.indexOf('</script>', tags.lastIndex);
-      if (stop < 0) break;
-      try { return JSON.parse(html.slice(tags.lastIndex, stop)); }
-      catch { throw new Error('Choose a fresh copy of the Arcahv study HTML.'); }
-    }
-    throw new Error('Choose the original self-contained Arcahv listening study HTML.');
-  }
-
-  function decodeBase64(value) {
-    if (typeof value !== 'string' || !value.length || value.length > 18 * 1024 * 1024) {
-      throw new Error('Choose the original study HTML with embedded audio.');
-    }
-    try {
-      if (Uint8Array.fromBase64) return Uint8Array.fromBase64(value);
-      const binary = atob(value);
-      const bytes = new Uint8Array(binary.length);
-      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-      return bytes;
-    } catch { throw new Error('Choose a fresh copy of the study HTML with embedded audio.'); }
   }
 
   function ascii(bytes, at, word) {
     if (at < 0 || at + word.length > bytes.length) return false;
     for (let i = 0; i < word.length; i++) if (bytes[at + i] !== word.charCodeAt(i)) return false;
     return true;
-  }
-
-  function validateFlac(bytes, expectedSeconds) {
-    if (bytes.length < 44 || !ascii(bytes, 0, 'fLaC') || (bytes[4] & 127) !== 0 ||
-        bytes[5] !== 0 || bytes[6] !== 0 || bytes[7] !== 34) return false;
-    const rate = bytes[18] * 4096 + bytes[19] * 16 + (bytes[20] >> 4);
-    const channels = ((bytes[20] >> 1) & 7) + 1;
-    const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
-    const frames = (bytes[21] & 15) * 4294967296 + view.getUint32(22);
-    let offset = 4;
-    while (offset + 4 <= bytes.length) {
-      const final = !!(bytes[offset] & 128);
-      const length = bytes[offset + 1] * 65536 + bytes[offset + 2] * 256 + bytes[offset + 3];
-      offset += 4 + length;
-      if (final) break;
-    }
-    return rate === 44100 && channels === 2 && Math.abs(frames / rate - expectedSeconds) < .002 &&
-      offset + 2 < bytes.length && bytes[offset] === 255 && (bytes[offset + 1] & 254) === 248;
-  }
-
-  function validateOpus(bytes) {
-    const v = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
-    let offset = 0, preSkip = -1, serial, sequence = 0;
-    while (offset + 27 < bytes.length && ascii(bytes, offset, 'OggS') && bytes[offset + 4] === 0) {
-      const flags = bytes[offset + 5], count = bytes[offset + 26], data = offset + 27 + count;
-      if (data > bytes.length) return false;
-      let next = data;
-      for (let j = offset + 27; j < data; j++) next += bytes[j];
-      if (next <= offset || next > bytes.length) return false;
-      if (sequence === 0) {
-        if (!(flags & 2) || next - data < 19 || !ascii(bytes, data, 'OpusHead') ||
-            bytes[data + 8] !== 1 || bytes[data + 9] !== 2) return false;
-        preSkip = v.getUint16(data + 10, true);
-        serial = v.getUint32(offset + 14, true);
-      }
-      if (v.getUint32(offset + 14, true) !== serial || v.getUint32(offset + 18, true) !== sequence++) return false;
-      if (flags & 4) {
-        const frames = v.getUint32(offset + 6, true) + 4294967296 * v.getUint32(offset + 10, true);
-        return next === bytes.length && Math.abs((frames - preSkip) / 48000 - duration) < .005;
-      }
-      offset = next;
-    }
-    return false;
-  }
-
-  function audioBlob(data, isFlac, seconds) {
-    const bytes = decodeBase64(data);
-    if (!(isFlac ? validateFlac(bytes, seconds) : validateOpus(bytes))) {
-      throw new Error('Choose the Arcahv study HTML with its original embedded tracks.');
-    }
-    return new Blob([bytes], {type: isFlac ? 'audio/flac' : 'audio/ogg'});
-  }
-
-  async function importPage(file) {
-    if (!(file instanceof Blob) || !file.size || file.size > 128 * 1024 * 1024) {
-      throw new Error('Choose a local study HTML smaller than 128 MiB.');
-    }
-    const html = await file.text();
-    const full = jsonBlock(html, 'v-payload'), intro = jsonBlock(html, 'payload');
-    if (!Array.isArray(full.audio) || full.audio.length !== 9 || !Number.isFinite(full.duration) ||
-        Math.abs(full.duration - duration) > .01 || !Array.isArray(intro.sounds) || intro.sounds.length !== 7) {
-      throw new Error('Choose the Arcahv study HTML containing both the full score and nine-bar arrangement.');
-    }
-    const entries = [];
-    for (let i = 0; i < full.audio.length; i++) {
-      const item = full.audio[i], trial = i === 4 || i === 5;
-      if (!item || item.name !== originalNames[i] || item.origin !== (trial ? 9.65 : 0)) {
-        throw new Error('Choose the Arcahv study HTML with its original track names and timing.');
-      }
-      entries.push(['full/' + i, audioBlob(item.data, trial, trial ? 5.1 : duration)]);
-    }
-    for (let i = 0; i < intro.sounds.length; i++) {
-      const blob = audioBlob(intro.sounds[i], true, i === 6 ? 4.8 : 498723 / 44100);
-      if (i < 3) entries.push(['intro/' + i, blob]);
-    }
-    entries.push(['reference', 1]);
-    return write(entries);
   }
 
   async function importStem(index, file) {
@@ -219,7 +107,7 @@
     if (Math.abs(seconds - duration) > 0.1) {
       throw new Error('This file is ' + seconds.toFixed(2) + ' s long. Choose a 172.99 s stem aligned to the start of Arcahv.');
     }
-    return write([['full/' + index, blob]]);
+    return write('full/' + index, blob);
   }
 
   async function recordedRoles() {
@@ -234,27 +122,20 @@
       if (value === null) keys.delete(key);
       else keys.add(key);
     }
-    return originalNames.map((_, i) => i).filter(i => keys.has('full/' + i));
-  }
-
-  async function removeReference() {
-    const keys = ['reference', ...originalNames.map((_, i) => 'full/' + i), 'intro/0', 'intro/1', 'intro/2'];
-    return write(keys.map(key => [key, null]));
+    return Array.from(publicFull.keys()).filter(i => keys.has('full/' + i));
   }
 
   async function audio(scope, index, options = {}) {
     if (!Number.isInteger(index) || index < 0 ||
-        !(scope === 'full' && index < 9 || scope === 'intro' && index < 7)) {
+        !(scope === 'full' && index < publicFull.length || scope === 'intro' && index < publicIntro.length)) {
       throw new Error('Unknown listening track.');
     }
-    if (scope === 'full' ? options.reference === true : index < 3) {
-      const blob = await read(scope + '/' + index);
-      if (!(blob instanceof Blob)) throw new Error(scope === 'full'
-        ? 'Load a local recording for this part.'
-        : 'Import your local study HTML to hear this reference track.');
+    if (scope === 'full' && options.reference === true) {
+      const blob = await read('full/' + index);
+      if (!(blob instanceof Blob)) throw new Error('Load a local recording for this part.');
       return blob.arrayBuffer();
     }
-    const asset = scope === 'full' ? 'media/guides/' + publicFull[index] : 'media/intro/' + index + '.flac';
+    const asset = scope === 'full' ? 'media/guides/' + publicFull[index] : 'media/' + publicIntro[index];
     const res = await fetch(new URL(asset, base), {mode: 'same-origin', credentials: 'same-origin'});
     if (!res.ok) throw new Error('The listening track could not be loaded (' + res.status + ').');
     return res.arrayBuffer();
@@ -292,7 +173,7 @@
   }
 
   async function setScene(file) {
-    if (file === null) return write([['scene', null]]);
+    if (file === null) return write('scene', null);
     if (!(file instanceof Blob) || !file.size || file.size > 16 * 1024 * 1024) throw new Error('Choose an image smaller than 16 MiB.');
     const bytes = new Uint8Array(await file.arrayBuffer());
     const [type, width, height] = imageDimensions(bytes);
@@ -311,16 +192,13 @@
       catch { throw new Error('This image could not be decoded.'); }
       finally { URL.revokeObjectURL(url); }
     }
-    return write([['scene', blob]]);
+    return write('scene', blob);
   }
 
   window.studyMedia = Object.freeze({
     audio,
-    importPage,
     importStem,
     recordedRoles,
-    removeReference,
-    hasReference: async () => (await read('reference')) === 1,
     setScene,
     getScene: async () => (await read('scene')) || null
   });
