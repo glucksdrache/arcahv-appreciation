@@ -20,9 +20,9 @@ Around 0:13, the chant holds B♭4 over E♭1. Across the octaves, the two notes
 
 ## From recording to score
 
-The transcription began with the stereo recording. KUIELab MDX-Net separated the voice, bass and drums, leaving a fourth part for instruments and effects. A pitch tracker followed the voice every 40 milliseconds. The bass overtones helped identify its lowest notes, and peaks in the drum track marked rhythmic accents.
+The transcription began with the stereo recording. KUIELab MDX-Net separated the voice, bass and drums, leaving a fourth part for instruments and effects. The **Synthesized reduction** uses oscillators and filtered noise to rebuild all four parts across the piece. A pitch tracker follows the chant’s slides and vibrato at roughly ten-millisecond intervals. The instruments sound in their measured registers. The bass follows the changing strength of its harmonics, and the drums follow both the bright attacks and the low resonances that trail them.
 
-The listening score plays these estimates back as synthesized parts. Choose a passage to follow one part at a time, or select **Original recording** to hear the passage in Feryquitous’s release. The nine-bar score lets you touch a note to see its pitch, starting time and duration. [Open the full score](https://glucksdrache.github.io/arcahv-appreciation/) · [Explore the opening nine bars](https://glucksdrache.github.io/arcahv-appreciation/arrangement.html)
+Listen to the bass around 11.65 seconds. As it drops from G1 to E♭1, its strongest harmonic shifts from the second to the third, so the change of pitch brings a change of tone. Switch from **Bass** to **Vocal + bass** to hear the chant against each bass note. In the nine-bar score, select a note to see its pitch, start time and duration. [Open the full score](https://glucksdrache.github.io/arcahv-appreciation/) · [Explore the opening nine bars](https://glucksdrache.github.io/arcahv-appreciation/arrangement.html)
 
 In **Recorded stems**, mix the four parts from 5.370 to 16.679 seconds. For the whole piece, select **Full track · local files**, choose a part and open its 2:52.99 audio file from your device. [Play the opening excerpt](https://glucksdrache.github.io/arcahv-appreciation/?source=recorded#listen)
 

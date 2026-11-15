@@ -9,7 +9,7 @@
   <link rel="icon" href="data:,">
   <link rel="stylesheet" href="style.css?v=opening-excerpt">
   <link rel="stylesheet" href="controls.css">
-  <script src="media-source.js?v=audio-import" defer></script>
+  <script src="media-source.js?v=harmonic-resynthesis" defer></script>
   <script src="appearance.js?v=vs8" defer></script>
   <script src="official-player.js" defer></script>
   <script src="full.js?v=audio-import" type="module"></script>
@@ -117,9 +117,9 @@
   <section class="panel" id="release-player" aria-label="Original recording"></section>
   <section class="notes" aria-labelledby="guide-title"><h2 id="guide-title">Section notes</h2><div id="v-index" class="index"></div></section>
   <details class="panel methods"><summary>Measurements and sources</summary>
-    <p>The horizontal axis follows the source file, including its opening silence. The vocal contour is sampled every 40 ms. Gaps mark frames without a sufficiently clear periodic pitch. Vocal and percussion levels are short-time RMS in dBFS.</p>
+    <p>The horizontal axis follows the source file, including its opening silence. The score plots the vocal contour at 40 ms intervals. Gaps mark frames without a sufficiently clear periodic pitch. Vocal and percussion levels are short-time RMS in dBFS.</p>
     <p>The bass estimate follows the lower harmonics. Instrumental chroma folds spectral peaks into twelve pitch classes. Overtones and separation bleed can contribute to a peak. The sustained D, F, A and C above E♭ around 13.2–13.8 s support a local Dm7/E♭ reading.</p>
-    <p>The synthesized reduction follows the measured pitch contours and chroma. The recorded excerpt separates the voice, bass, drums and remaining instruments and effects over the opening nine bars.</p>
+    <p>Oscillators follow the vocal slides, bass harmonics and instrumental pitches in their measured registers. Filtered noise supplies breath, percussion attacks and effect tails. The recorded excerpt presents the four separated parts over the opening nine bars.</p>
     <p>The background uses a blurred version of lowiro’s artwork for <em>Arcaea</em>, <a href="https://arcaea.fandom.com/wiki/Story/Black_Fate#Entry_VS-8">Black Fate, entry VS-8</a>. <button id="import-scene" class="quiet-button">Choose local background</button> <button id="reset-scene" class="quiet-button" hidden>Restore VS-8 background</button><input hidden type="file" accept="image/jpeg,image/png,image/webp" id="scene-file"><span id="scene-status" role="status"></span></p>
   </details>
 </main>

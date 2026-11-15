@@ -136,7 +136,9 @@
       return blob.arrayBuffer();
     }
     const asset = scope === 'full' ? 'media/guides/' + publicFull[index] : 'media/' + publicIntro[index];
-    const res = await fetch(new URL(asset, base), {mode: 'same-origin', credentials: 'same-origin'});
+    const url = new URL(asset, base);
+    if (scope === 'full') url.searchParams.set('v', 'harmonic-resynthesis');
+    const res = await fetch(url, {mode: 'same-origin', credentials: 'same-origin'});
     if (!res.ok) throw new Error('The listening track could not be loaded (' + res.status + ').');
     return res.arrayBuffer();
   }
