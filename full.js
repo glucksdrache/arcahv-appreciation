@@ -1,3 +1,5 @@
+import { excerptStart, excerptEnd, excerptParts, loadExcerpt } from './excerpt-audio.js';
+
 const $ = (id) => document.getElementById(id);
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const names = ['C', 'D♭', 'D', 'E♭', 'E', 'F', 'G♭', 'G', 'A♭', 'A', 'B♭', 'B'];
@@ -12,6 +14,8 @@ let context, active, pending = false, revision = 0, source = 'guide', referenceG
 let animationFrame, graphCursor, lastFrame = -1, loadingReference = false;
 let dragging = false, previewTime = null, heatImage;
 let recordedRoles = new Set(), libraryRevision = 0;
+let previousFullRange;
+const audibleExcerptParts = new Set(excerptParts);
 const decoded = new Map(), decoding = new Map();
 
 function formatTime(time, decimal = true) {
@@ -141,6 +145,9 @@ function readout(force = false) {
   const idx = clamp(Math.round(t / data.curves.dt), 0, data.curves.vocalMidi.length - 1);
   const col = clamp(Math.round(t / data.harmonics.dt), 0, data.harmonics.peaks.length - 1);
   const px = chartX + chartWidth * clamp((t - start) / (end - start), 0, 1);
+  if (source === 'excerpt') {
+    $('excerpt-controls').style.setProperty('--excerpt-progress', (100 * clamp((t - start) / (end - start), 0, 1)) + '%');
+  }
   if (graphCursor) { graphCursor.setAttribute('x1', px); graphCursor.setAttribute('x2', px); }
   if (!dragging) $('v-slider').value = t;
   $('v-clock').textContent = formatTime(t) + ' / ' + formatTime(end);
@@ -157,6 +164,7 @@ function animate() {
 }
 
 function canPlay(index) {
+  if (source === 'excerpt') return index === 0;
   return source === 'guide' || recordedRoles.has(index);
 }
 
@@ -167,16 +175,26 @@ function availablePart(preferred) {
 
 function paint() {
   const available = canPlay(role);
+  const excerpt = source === 'excerpt';
   $('v-play').textContent = active ? 'Ⅱ Pause' : pending ? 'Loading…' : '▶ Play';
   $('v-play').setAttribute('aria-label', active ? 'Pause' : pending ? 'Cancel loading' : 'Play');
   $('v-play').disabled = !available;
   $('v-listening').textContent = available ? labels[active?.role ?? role] : '—';
+  if (excerpt) {
+    const parts = [];
+    document.querySelectorAll('[data-excerpt-part]').forEach(button => {
+      const on = audibleExcerptParts.has(button.dataset.excerptPart);
+      button.setAttribute('aria-pressed', String(on));
+      if (on) parts.push(button.dataset.excerptPart);
+    });
+    $('v-listening').textContent = parts.length === excerptParts.length ? 'Mix' : parts.join(' + ') || 'Muted';
+  }
   document.querySelectorAll('[data-vmode]').forEach(button => {
     const index = Number(button.dataset.vmode);
     button.disabled = !canPlay(index);
     button.setAttribute('aria-pressed', String(!button.disabled && index === role));
   });
-  document.querySelectorAll('[data-natural], #v-index button').forEach(button => { button.disabled = !available; });
+  document.querySelectorAll('[data-natural], #v-index button').forEach(button => { button.disabled = excerpt || !available; });
 }
 
 function dispose(fadeAt) {
@@ -184,14 +202,19 @@ function dispose(fadeAt) {
   active = undefined;
   cancelAnimationFrame(animationFrame);
   if (!old) return;
-  const cleanup = () => { old.node.disconnect(); old.gain.disconnect(); };
-  old.node.onended = fadeAt === undefined ? null : cleanup;
+  const cleanup = () => {
+    for (const {node, trim} of old.tracks) { node.disconnect(); trim?.disconnect(); }
+    old.gain.disconnect();
+  };
+  old.tracks[0].node.onended = fadeAt === undefined ? null : cleanup;
   if (fadeAt !== undefined) {
     old.gain.gain.cancelScheduledValues(fadeAt);
     old.gain.gain.setValueAtTime(old.gain.gain.value, fadeAt);
     old.gain.gain.linearRampToValueAtTime(0, fadeAt + .012);
   }
-  try { old.node.stop(fadeAt === undefined ? 0 : fadeAt + .014); } catch {}
+  for (const {node} of old.tracks) {
+    try { node.stop(fadeAt === undefined ? 0 : fadeAt + .014); } catch {}
+  }
   if (fadeAt === undefined) cleanup();
 }
 
@@ -239,39 +262,55 @@ async function play(index = role, matchPhrase = false) {
     if (!context) context = new AudioContext({sampleRate: 44100});
     await context.resume();
     if (id !== revision) return;
-    const buffer = await bufferFor(index, kind);
+    const excerpt = kind === 'excerpt';
+    const buffers = excerpt ? await loadExcerpt(context) : [await bufferFor(index, kind)];
     if (id !== revision) return;
     const when = context.currentTime + .02;
     let from = currentTime(when);
     if (matchPhrase && active) from = start + (from - active.start);
     if (from >= end - .002 || from < start) from = start;
-    const origin = isTrial(index) ? cueStart : 0;
-    const node = context.createBufferSource(), gain = context.createGain();
-    node.buffer = buffer;
-    node.loop = $('v-loop').checked;
-    node.loopStart = Math.max(0, start - origin);
-    node.loopEnd = Math.min(buffer.duration, end - origin);
-    node.connect(gain); gain.connect(context.destination);
+    const origin = excerpt ? excerptStart : isTrial(index) ? cueStart : 0;
+    const loop = $('v-loop').checked;
+    const gain = context.createGain();
+    gain.connect(context.destination);
+    const tracks = buffers.map((buffer, i) => {
+      const node = context.createBufferSource();
+      node.buffer = buffer;
+      node.loop = loop;
+      node.loopStart = Math.max(0, start - origin);
+      node.loopEnd = Math.min(buffer.duration, end - origin);
+      const part = excerpt ? excerptParts[i] : null;
+      const trim = excerpt ? context.createGain() : null;
+      if (trim) {
+        trim.gain.value = Number(audibleExcerptParts.has(part));
+        trim.connect(gain);
+      }
+      node.connect(trim || gain);
+      return {node, trim, part};
+    });
     const cross = Boolean(active);
     dispose(cross ? when : undefined);
     gain.gain.setValueAtTime(cross ? 0 : 1, when);
     if (cross) gain.gain.linearRampToValueAtTime(1, when + .012);
-    active = { node, gain, from, when, start, end, loop: node.loop, role: index };
+    const playing = { tracks, gain, from, when, start, end, loop, role: index };
+    active = playing;
     position = from;
     pending = false;
-    node.onended = () => {
-      if (active?.node !== node) return;
+    tracks[0].node.onended = () => {
+      if (active !== playing) return;
       position = end;
       dispose();
       paint(); readout(true);
     };
-    node.start(when, clamp(from - origin, 0, Math.max(0, buffer.duration - .001)));
-    if (!node.loop) node.stop(when + end - from);
+    for (const {node} of tracks) {
+      node.start(when, clamp(from - origin, 0, Math.max(0, node.buffer.duration - .001)));
+      if (!loop) node.stop(when + end - from);
+    }
     paint(); drawChart(); animate();
   } catch (error) {
     if (id !== revision) return;
     pause();
-    $('v-status').textContent = error?.message || 'Audio could not be loaded. Press Play to retry.';
+    $('v-status').textContent = error?.message || 'Press Play to reload the audio.';
   }
 }
 
@@ -297,7 +336,7 @@ function setRange(a, b, key, run = false, loop = key !== 'whole', keepActive = f
     natural1: 'Return. B♭4 over E2 gives a tritone.'
   };
   $('v-section-note').textContent = s ? s.observation : notes[key] || '';
-  const special = { trial: 'Controlled bass comparison', natural0: 'First vocal phrase', natural1: 'Vocal return', custom: 'Custom range' };
+  const special = { excerpt: 'Opening nine bars', trial: 'Controlled bass comparison', natural0: 'First vocal phrase', natural1: 'Vocal return', custom: 'Custom range' };
   const preset = Array.from($('v-presets').querySelectorAll('[data-seg]')).find(button => button.dataset.seg === key);
   const label = s?.name || preset?.textContent.trim() || special[key] || formatTime(a) + '–' + formatTime(b);
   window.dispatchEvent(new CustomEvent('study:range-change', { detail: { start: a, end: b, label } }));
@@ -326,15 +365,36 @@ async function refreshReference() {
   else paint();
 }
 
-function changeSource(kind, preferred = role) {
+function changeSource(kind, preferred) {
   const resume = Boolean(active || pending);
+  const time = currentTime(), wasExcerpt = source === 'excerpt';
+  if (kind === 'excerpt' && !wasExcerpt) {
+    previousFullRange = {start, end, time, role, selection, loop: $('v-loop').checked};
+  }
   source = kind;
-  $('source-choice').value = kind;
-  $('stem-controls').hidden = kind !== 'reference';
-  role = availablePart(preferred);
+  const excerpt = kind === 'excerpt';
+  $('source-choice').value = kind === 'guide' ? 'guide' : 'reference';
+  $('recording-range').value = excerpt ? 'excerpt' : 'full';
+  $('stem-controls').hidden = kind === 'guide';
+  $('excerpt-controls').hidden = !excerpt;
+  $('import-controls').hidden = kind !== 'reference';
+  for (const id of ['v-map', 'v-presets', 'v-custom', 'v-modes']) $(id).hidden = excerpt;
+  if (excerpt) {
+    role = 0;
+    setRange(excerptStart, excerptEnd, 'excerpt', false, false);
+    if (time >= start && time < end) position = time;
+  } else if (wasExcerpt) {
+    const saved = previousFullRange;
+    role = availablePart(preferred ?? saved.role);
+    const key = saved.selection === 'trial' && !isTrial(role) ? 'turn' : saved.selection;
+    setRange(saved.start, saved.end, key, false, saved.loop);
+    position = time >= start && time < end ? time : saved.time;
+    previousFullRange = undefined;
+  } else {
+    role = availablePart(preferred ?? role);
+  }
   if (!canPlay(role)) pause();
   if (selection === 'trial' && !isTrial(role)) {
-    const time = currentTime();
     setRange(cueStart, cueEnd, 'turn', false, $('v-loop').checked);
     position = time;
   }
@@ -361,7 +421,7 @@ async function importLocal(input, index) {
     const name = individual ? labels[index] : 'Reference';
     status.textContent = name + (result.persistent ? ' saved on this device.' : ' loaded for this tab.');
   } catch (error) {
-    status.textContent = error.message || 'The local file could not be read.';
+    status.textContent = error.message || 'Choose a local file and try again.';
   } finally {
     loadingReference = false;
     for (const id of ['import-ref', 'import-stem', 'stem-role']) $(id).disabled = false;
@@ -382,6 +442,7 @@ function chooseRole(index) {
 }
 
 async function init() {
+  if (new URLSearchParams(location.search).get('source') === 'recorded') $('source-choice').value = 'reference';
   const response = await fetch('data/full.json');
   if (!response.ok) throw new Error('The score data could not be loaded. Reload the page to retry.');
   data = await response.json();
@@ -470,8 +531,26 @@ async function init() {
   });
   $('source-choice').onchange = event => {
     if (!loadingReference) $('ref-status').textContent = '';
-    changeSource(event.target.value);
+    changeSource(event.target.value === 'reference' ? 'excerpt' : 'guide');
   };
+  $('recording-range').onchange = event => {
+    if (!loadingReference) $('ref-status').textContent = '';
+    changeSource(event.target.value === 'excerpt' ? 'excerpt' : 'reference');
+  };
+  for (const button of document.querySelectorAll('[data-excerpt-part]')) {
+    button.onclick = () => {
+      const part = button.dataset.excerptPart;
+      const enabled = !audibleExcerptParts.has(part);
+      if (enabled) audibleExcerptParts.add(part);
+      else audibleExcerptParts.delete(part);
+      const track = active?.tracks.find(track => track.part === part);
+      if (track) track.trim.gain.setTargetAtTime(Number(enabled), context.currentTime, .006);
+      paint();
+    };
+  }
+  for (const cue of document.querySelectorAll('[data-excerpt-cue]')) {
+    cue.onclick = () => seek(Number(cue.dataset.excerptCue));
+  }
   $('import-ref').onclick = () => $('ref-file').click();
   $('ref-file').onchange = event => importLocal(event.target, undefined);
   $('import-stem').onclick = () => $('stem-file').click();
@@ -485,8 +564,9 @@ async function init() {
   window.addEventListener('pagehide', pause);
   window.addEventListener('pageshow', refreshOnReturn);
   window.addEventListener('focus', refreshOnReturn);
-  await refreshReference().catch(error => { $('ref-status').textContent = error.message; });
   setRange(0, data.duration, 'whole', false, false);
+  if ($('source-choice').value === 'reference') changeSource('excerpt');
+  await refreshReference().catch(error => { $('ref-status').textContent = error.message; });
 }
 
 init().catch(error => { $('v-status').textContent = error.message; });

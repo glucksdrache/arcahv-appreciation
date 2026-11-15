@@ -99,14 +99,14 @@
       const stop = html.indexOf('</script>', tags.lastIndex);
       if (stop < 0) break;
       try { return JSON.parse(html.slice(tags.lastIndex, stop)); }
-      catch { throw new Error('The local study contains an unreadable data block.'); }
+      catch { throw new Error('Choose a fresh copy of the Arcahv study HTML.'); }
     }
     throw new Error('Choose the original self-contained Arcahv listening study HTML.');
   }
 
   function decodeBase64(value) {
     if (typeof value !== 'string' || !value.length || value.length > 18 * 1024 * 1024) {
-      throw new Error('An embedded audio track is missing or too large.');
+      throw new Error('Choose the original study HTML with embedded audio.');
     }
     try {
       if (Uint8Array.fromBase64) return Uint8Array.fromBase64(value);
@@ -114,7 +114,7 @@
       const bytes = new Uint8Array(binary.length);
       for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
       return bytes;
-    } catch { throw new Error('An embedded audio track has invalid base64 data.'); }
+    } catch { throw new Error('Choose a fresh copy of the study HTML with embedded audio.'); }
   }
 
   function ascii(bytes, at, word) {
@@ -169,7 +169,7 @@
   function audioBlob(data, isFlac, seconds) {
     const bytes = decodeBase64(data);
     if (!(isFlac ? validateFlac(bytes, seconds) : validateOpus(bytes))) {
-      throw new Error('The embedded recording has an unexpected audio format or duration.');
+      throw new Error('Choose the Arcahv study HTML with its original embedded tracks.');
     }
     return new Blob([bytes], {type: isFlac ? 'audio/flac' : 'audio/ogg'});
   }
@@ -182,13 +182,13 @@
     const full = jsonBlock(html, 'v-payload'), intro = jsonBlock(html, 'payload');
     if (!Array.isArray(full.audio) || full.audio.length !== 9 || !Number.isFinite(full.duration) ||
         Math.abs(full.duration - duration) > .01 || !Array.isArray(intro.sounds) || intro.sounds.length !== 7) {
-      throw new Error('The file does not contain the full Arcahv reference and nine-bar study.');
+      throw new Error('Choose the Arcahv study HTML containing both the full score and nine-bar arrangement.');
     }
     const entries = [];
     for (let i = 0; i < full.audio.length; i++) {
       const item = full.audio[i], trial = i === 4 || i === 5;
       if (!item || item.name !== originalNames[i] || item.origin !== (trial ? 9.65 : 0)) {
-        throw new Error('The embedded reference tracks are missing their expected labels or timing.');
+        throw new Error('Choose the Arcahv study HTML with its original track names and timing.');
       }
       entries.push(['full/' + i, audioBlob(item.data, trial, trial ? 5.1 : duration)]);
     }
@@ -203,7 +203,7 @@
   async function importStem(index, file) {
     if (!stemIndices.includes(index)) throw new Error('Choose a full-length listening part.');
     if (!(file instanceof Blob) || !file.size || file.size > 128 * 1024 * 1024) {
-      throw new Error('Choose a nonempty audio file up to 128 MiB.');
+      throw new Error('Choose an audio file up to 128 MiB.');
     }
     const bytes = await file.arrayBuffer();
     // Keep an independent copy before the decoder takes ownership of the buffer.
@@ -213,7 +213,7 @@
       const decoder = new OfflineAudioContext(1, 1, 44100);
       seconds = (await decoder.decodeAudioData(bytes)).duration;
     } catch {
-      throw new Error('This browser could not decode the selected audio file.');
+      throw new Error('Choose a playable audio file, such as WAV or FLAC.');
     }
     // Allow a few extra codec frames at the ends of compressed files.
     if (Math.abs(seconds - duration) > 0.1) {

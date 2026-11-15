@@ -24,6 +24,6 @@ The transcription began with the stereo recording. KUIELab MDX-Net separated the
 
 The listening score plays these estimates back as synthesized parts. Choose a passage to follow one part at a time, or select **Original recording** to hear the passage in Feryquitous’s release. The nine-bar score lets you touch a note to see its pitch, starting time and duration. [Open the full score](https://glucksdrache.github.io/arcahv-appreciation/) · [Explore the opening nine bars](https://glucksdrache.github.io/arcahv-appreciation/arrangement.html)
 
-To follow your own vocal, bass or drum stem in the full score, choose **Recorded stems**, select the part and open its audio file. Playback uses the file on your device. Each stem follows the full 2:52.99 timeline from the opening silence.
+In **Recorded stems**, mix the four parts from 5.370 to 16.679 seconds. For the whole piece, select **Full track · local files**, choose a part and open its 2:52.99 audio file from your device. [Play the opening excerpt](https://glucksdrache.github.io/arcahv-appreciation/?source=recorded#listen)
 
 *Music by Feryquitous. Scene artwork from lowiro’s Arcaea, Black Fate (VS-8). Display type set in Cormorant Garamond.* [Artist recording](https://www.youtube.com/watch?v=eNnL750ViLY) · [Font license](assets/type/OFL.txt)
